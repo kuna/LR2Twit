@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "TwitProc.h"
 
+#include "shellapi.h"
+#include "Log.h"
 
 bool cp949_to_utf8(const string& in, string& out)
 {
@@ -47,6 +49,11 @@ TwitProc::TwitProc() {
 }*/
 
 // http://code.google.com/p/twitcurl/source/browse/trunk/twitterClient/twitterClient.cpp
+
+TwitProc::TwitProc(Log *_l) {
+	l = _l;
+}
+
 bool TwitProc::loadToken() {
     char tmpBuf[1024];
 	
@@ -134,7 +141,23 @@ bool TwitProc::getToken(string id, string pass) {
             /* Else, pass auth url to twitCurl and get it via twitCurl PIN handling */
 
             bool res = twitterObj.oAuthHandlePIN( authUrl );
-			if (!res) return false;
+			if (!res) {
+				if (MessageBox(NULL, L"Token 가져오기에 실패하였습니다. 수동으로 Token을 가져오시겠습니까 'ㅠ'?", L"", MB_YESNO) == IDYES) {
+					memset( tmpBuf, 0, 1024 );
+					//WinExec(authUrl.c_str(), NULL);
+					ShellExecuteA(NULL, "Open", authUrl.c_str(), NULL, NULL, SW_SHOW);
+					AllocConsole();
+					freopen("CONOUT$", "wt", stdout);
+					freopen("CONIN$", "r", stdin);
+					printf("From this site:%s\nEnter PIN :\n", authUrl.c_str());
+					gets( tmpBuf );
+					FreeConsole();
+					tmpStr = tmpBuf;
+					twitterObj.getOAuth().setOAuthPin( tmpStr );
+				} else {
+					return false;
+				}
+			}
         //}*/
 
         /* Step 4: Exchange request token with access token */
@@ -147,6 +170,9 @@ bool TwitProc::getToken(string id, string pass) {
         /* Step 6: Save these keys in a file or wherever */
         std::ofstream oAuthTokenKeyOut;
         std::ofstream oAuthTokenSecretOut;
+
+		DeleteFileA("twitterClient_token_key.txt");
+		DeleteFileA("twitterClient_token_secret.txt");
 
         oAuthTokenKeyOut.open( "twitterClient_token_key.txt" );
         oAuthTokenSecretOut.open( "twitterClient_token_secret.txt" );
@@ -173,13 +199,69 @@ bool TwitProc::sendTwit(string msg)
 	if (twitterObj.statusUpdate( conv_msg )) {
 		string replyMsg;
 		twitterObj.getLastWebResponse( replyMsg );
-		
-		OutputDebugStringA( replyMsg.c_str() );
+		l->writeLogLine( L"[Twit]", replyMsg.c_str() );
 		return true;
 	} else {
 		string replyMsg;
 		twitterObj.getLastCurlError( replyMsg );
+		l->writeLogLine( L"[Twit Error]", replyMsg.c_str() );
 		return false;
 	}
 	// wprintf(L"\r\nUpdate Result:\r\n%s\r\n", submitResult.c_str());
+}
+
+size_t write_data(void *buffer, size_t size, size_t nmemb, void* userp)
+{
+ 
+	std::stringstream strmResponse;
+	size_t nReal = size * nmemb;
+	strmResponse << std::string((char*)buffer, size*nmemb);
+	std::string sLine("");
+	while (getline(strmResponse, sLine)) {
+		std::cout << sLine.c_str() << std::endl;
+	}
+	return nReal;
+}
+
+#define END_POINT "http://twitpic.com/api/uploadAndPost"
+#define EXPECT_ARGS 4
+int TwitProc::postTwitpic(std::string& sUser, std::string& sPass, std::string& sFileName, std::string& desc)
+{
+	int result = 0;
+	CURL* hCurl = NULL;
+	CURLcode hResult;
+	//Curl for form data
+	struct curl_httppost *post = NULL;
+	struct curl_httppost *last = NULL;
+	try{
+		//Initialize curl, just don't let easy_init to do it for you
+		curl_global_init(CURL_GLOBAL_ALL);
+		//Handle to the curl
+		hCurl = curl_easy_init();
+		if(NULL == hCurl) {
+			throw false;
+		}
+		//Construct the form
+		curl_formadd(&post, &last, CURLFORM_COPYNAME, "username", CURLFORM_COPYCONTENTS, sUser.c_str(), CURLFORM_END);
+		curl_formadd(&post, &last, CURLFORM_COPYNAME, "password", CURLFORM_COPYCONTENTS, sPass.c_str(), CURLFORM_END);
+		curl_formadd(&post, &last, CURLFORM_COPYNAME, "media", CURLFORM_FILE, sFileName.c_str(), CURLFORM_END);
+		curl_formadd(&post, &last, CURLFORM_COPYNAME, "message", CURLFORM_COPYCONTENTS, desc.c_str(), CURLFORM_END);
+		//Specify the API Endpoint
+		hResult = curl_easy_setopt(hCurl,CURLOPT_URL, END_POINT);
+		//Specify the HTTP Method
+		hResult = curl_easy_setopt(hCurl, CURLOPT_HTTPPOST, post);
+		//Post Away !!!
+		hResult = curl_easy_perform(hCurl);
+		if(hResult != CURLE_OK){
+			std::cout << "Cannot find the twitpic site " << std::endl;
+			throw false;
+		}
+	}
+	catch (...) {
+		result = -1;
+	}
+	curl_formfree(post);
+    curl_easy_cleanup(hCurl);
+	curl_global_cleanup();
+    return result;
 }
