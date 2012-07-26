@@ -105,10 +105,10 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 	wcex.cbClsExtra		= 0;
 	wcex.cbWndExtra		= 0;
 	wcex.hInstance		= hInstance;
-	wcex.hIcon			= LoadIcon(hInstance, MAKEINTRESOURCE(IDI_LR2_D));
+	wcex.hIcon			= LoadIcon(hInstance, MAKEINTRESOURCE(IDI_LR2_E));
 	wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
 	wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW+1);
-	wcex.lpszMenuName	= MAKEINTRESOURCE(IDI_LR2_D);
+	wcex.lpszMenuName	= MAKEINTRESOURCE(IDI_LR2_E);
 	wcex.lpszClassName	= szWindowClass;
 	wcex.hIconSm		= LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
 
@@ -447,7 +447,7 @@ void doTray() {
     nid.hWnd = m_hWnd; // 메인 윈도우 핸들
     nid.uID = ID_NOTIFY;  // 아이콘 리소스 ID
     nid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP; // 플래그 설정
-    nid.hIcon = LoadIcon( hInst, MAKEINTRESOURCE(IDI_LR2_D) ); // 아이콘 로드 
+    nid.hIcon = LoadIcon( hInst, MAKEINTRESOURCE(IDI_LR2_E) ); // 아이콘 로드 
 	nid.uCallbackMessage = ID_NOTIFY_CLICK;
 
     TCHAR strTitle[256];
@@ -465,10 +465,10 @@ void changeTray(bool detect) {
 	data.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
 	//strcpy( data.szTip, "메세지 도착" );
 	if (detect) {
-		data.hIcon = LoadIcon( hInst, MAKEINTRESOURCE(IDI_LR2_E) );
+		data.hIcon = LoadIcon( hInst, MAKEINTRESOURCE(IDI_LR2_D) );
 		lstrcpy(data.szTip, L"LR2Twit (detected)"); 
 	} else {
-		data.hIcon = LoadIcon( hInst, MAKEINTRESOURCE(IDI_LR2_D) );
+		data.hIcon = LoadIcon( hInst, MAKEINTRESOURCE(IDI_LR2_E) );
 		lstrcpy(data.szTip, L"LR2Twit (undetected)"); 
 	}
 	data.uCallbackMessage = ID_NOTIFY_CLICK;
