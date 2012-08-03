@@ -3,15 +3,20 @@
 
 #include "stdafx.h"
 #include "LR2Twit.h"
+#include "DLLInjector.h"
+#include "conv.h"
+#include "lang.h"
 
 #include <atlcore.h> /*string.wstring*/
 #include <shellapi.h>	/*shell icon*/
+#include <process.h>	/* thread */
 
 #include <io.h>
 #include <mmsystem.h>
 #pragma comment (lib,"winmm.lib")
 
 #define MAX_LOADSTRING 100
+#define CAPTURE_DELAY 3500
 
 // Global Variables:
 HINSTANCE hInst;								// current instance
@@ -24,12 +29,38 @@ BOOL				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
 
+// language
+LanguageSetting m_Lang;
+
+// DLL Injector
+DLLInjector g_DLL;
+
 // for lowlevel Hooking
 HHOOK hHook;
 LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
 	if (nCode == HC_ACTION) {
-		if (opt4 && c_dect->isResultScreen() && ((EVENTMSG*)lParam)->message == 'T' && wParam == WM_KEYUP) {
-			doTwit();
+		int bControlKeyDown = GetAsyncKeyState (VK_CONTROL);
+		if (bControlKeyDown && wParam == WM_KEYUP && opt4) {
+			if (((EVENTMSG*)lParam)->message == 'T' && c_dect->isResultScreen()) {
+				doTwit(0);
+			}
+			if (((EVENTMSG*)lParam)->message == 'R' && c_dect->isResultScreen()) {
+				doTwitwithPic(0);
+			}
+			if (((EVENTMSG*)lParam)->message == 'Y' && c_dect->isPlaying()) {
+				twit_cancel = !twit_cancel;
+
+				if (twit_cancel) {
+					setMessage( m_Lang.GetLanguageA("HOOK", "TwitCancel").c_str() );
+				} else {
+					setMessage( m_Lang.GetLanguageA("HOOK", "TwitRetry").c_str() );
+				}
+			}
+			if (((EVENTMSG*)lParam)->message == 'A') {
+				// REInspect
+				g_DLL.Inject(NULL, "LR2 beta3 version 100201", ".\\LR2DLL.dll");
+				setMessage("DLL Re-Injected.");
+			}
 		}
 	}
 
@@ -132,7 +163,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    hInst = hInstance; // Store instance handle in our global variable
 
    hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, CW_USEDEFAULT, 240, 250, NULL, NULL, hInstance, NULL);
+      CW_USEDEFAULT, CW_USEDEFAULT, 240, 270, NULL, NULL, hInstance, NULL);
 	m_hWnd = hWnd;
 
    if (!hWnd)
@@ -148,7 +179,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    if (!m_log.InitLog(L".\\log.txt"))
    {
-	   MessageBox(hWnd, L"로그 생성에 실패하였습니다.", L"", NULL);
+	   MessageBox(hWnd, m_Lang.GetLanguageW(L"DIALOG", L"FailLog").c_str(), L"", NULL);
 	   PostQuitMessage(0);
 	   return FALSE;
    }
@@ -158,13 +189,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    c_dect = new Detector(&m_log);
    c_twit = new TwitProc(&m_log);
    if (!c_twit->loadToken()) {
-	   MessageBox(hWnd, L"OAuth 인증 토큰이 없습니다!\n설정창을 통하여 인증을 받아 주세요.", L"", NULL);
+	   MessageBox(hWnd, m_Lang.GetLanguageW(L"DIALOG", L"NoOAuthToken").c_str(), L"", NULL);
    }
-   //if (!c_dect->detectLR2()) {
-//	   MessageBox(hWnd, L"LR2 창을 찾을 수 없습니다!", L"", NULL);
-//	   DestroyWindow(hWnd);
-//	   return FALSE;
-  // }
 
    SetTimer(hWnd, 1, 1000, NULL);
    doTray();
@@ -176,27 +202,15 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    m_log.writeDate();
    m_log.writeLogLine(L"Program successfully launched");
 
-   hHook = SetWindowsHookEx(WH_KEYBOARD_LL, (HOOKPROC)HookProc,
-	   GetModuleHandle(NULL), NULL);
-   if (hHook) {
-	   m_log.writeLogLine(L"Successfully Hooked - WH_KEYBOARD_LL");
-   } else {
-	   m_log.writeLogLine(L"Hooking Failed - WH_KEYBOARD_LL");
-   }
+   setSharedMemory();
+   m_log.writeLogLine(L"setSharedMemory(); Excuted");
+
+   startKeyHook();
 
    return TRUE;
 }
 
-//
-//  FUNCTION: WndProc(HWND, UINT, WPARAM, LPARAM)
-//
-//  PURPOSE:  Processes messages for the main window.
-//
-//  WM_COMMAND	- process the application menu
-//  WM_PAINT	- Paint the main window
-//  WM_DESTROY	- post a quit message and return
-//
-//
+
 bool b_detected = false;
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -211,34 +225,36 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	switch (message)
 	{
 	case WM_CREATE:
-		c1_hWnd = CreateWindow(L"button", L"Automatic Result Tweet", WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+		c1_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg1").c_str(), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
 			10, 10, 200, 20, hWnd, (HMENU)ID_CHK1, hInst, NULL);
-		c2_hWnd = CreateWindow(L"button", L"Only Tweet when Cleared", WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+		c2_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg2").c_str(), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
 			10, 30, 200, 20, hWnd, (HMENU)ID_CHK2, hInst, NULL);
-		c3_hWnd = CreateWindow(L"button", L"Only Tweet when New Record", WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+		c3_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg3").c_str(), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
 			10, 50, 200, 20, hWnd, (HMENU)ID_CHK3, hInst, NULL);
-		c4_hWnd = CreateWindow(L"button", L"Tweet when press \'T\' Key", WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+		c4_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg4").c_str(), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
 			10, 70, 200, 20, hWnd, (HMENU)ID_CHK4, hInst, NULL);
+		c5_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg5").c_str(), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+			10, 90, 200, 20, hWnd, (HMENU)ID_CHK5, hInst, NULL);
 
 		e1_hWnd = CreateWindow(L"edit", L"", WS_CHILD | WS_VISIBLE | BS_TEXT | WS_BORDER,
-			10, 100, 200, 20, hWnd, (HMENU)0, hInst, NULL);
-		e2_hWnd = CreateWindow(L"edit", L"", WS_CHILD | WS_VISIBLE | BS_TEXT | WS_BORDER | ES_PASSWORD,
 			10, 120, 200, 20, hWnd, (HMENU)0, hInst, NULL);
-		b3_hWnd = CreateWindow(L"button", L"Auth Tweet Account", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-			10, 140, 200, 20, hWnd, (HMENU)ID_TWEETAUTH, hInst, NULL);
+		e2_hWnd = CreateWindow(L"edit", L"", WS_CHILD | WS_VISIBLE | BS_TEXT | WS_BORDER | ES_PASSWORD,
+			10, 140, 200, 20, hWnd, (HMENU)0, hInst, NULL);
+		b3_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg6").c_str(), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+			10, 160, 200, 20, hWnd, (HMENU)ID_TWEETAUTH, hInst, NULL);
 
-		b1_hWnd = CreateWindow(L"button", L"OK", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-			10, 170, 60, 20, hWnd, (HMENU)ID_OK, hInst, NULL);
-		b2_hWnd = CreateWindow(L"button", L"Cancel", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-			80, 170, 60, 20, hWnd, (HMENU)ID_CANCEL, hInst, NULL);
-		b4_hWnd = CreateWindow(L"button", L"Twit", WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-			160, 170, 40, 20, hWnd, (HMENU)ID_TWIT, hInst, NULL);
+		b1_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg7").c_str(), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+			10, 190, 60, 20, hWnd, (HMENU)ID_OK, hInst, NULL);
+		b2_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg8").c_str(), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+			80, 190, 60, 20, hWnd, (HMENU)ID_CANCEL, hInst, NULL);
+		b4_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg9").c_str(), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
+			160, 190, 40, 20, hWnd, (HMENU)ID_TWIT, hInst, NULL);
 
 		break;
 	case WM_COMMAND:
 		wmId    = LOWORD(wParam);
 		wmEvent = HIWORD(wParam);
-		// Parse the menu selections:
+
 		switch (wmId)
 		{
 		case IDM_ABOUT:
@@ -252,9 +268,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			ShowWindow(m_hWnd, SW_SHOW);
 			break;
 		case ID_MENU_EXIT:
-			delTray();
-			m_log.endLog();
-			PostQuitMessage(0);
+			DestroyWindow(hWnd);
 			break;
 
 			/* button */
@@ -266,18 +280,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			ShowWindow(m_hWnd, SW_HIDE);
 			break;
 		case ID_TWIT:
-			if (!c_dect->isCleared()) {
-				MessageBox(m_hWnd, L"클리어 화면에서만 사용 가능한 기능입니다.\nOnly can be used at result screen status.", L"", NULL);
+			if (!c_dect->isCleared() && twit_clear) {
+				MessageBox(m_hWnd, m_Lang.GetLanguageW(L"DIALOG", L"OnlyClearScreen").c_str(), L"", NULL);
 			} else {
 				if (c_dect->isAutoPlaying()) {
-					MessageBox(m_hWnd, L"AutoPlay에서는 사용하실 수 없습니다.", L"", NULL);
+					MessageBox(m_hWnd, m_Lang.GetLanguageW(L"DIALOG", L"NoAutoPlay").c_str(), L"", NULL);
 					break;
 				}
 				TCHAR str[255];
 				c_dect->getLR2StatusString(str);
-				int r = MessageBox(m_hWnd, wstring(str).append(L"\n\n위 내용으로 트윗하시겠습니까?\nTwit this message?").c_str(), L"", MB_YESNO);
+				int r = MessageBox(m_hWnd, wstring(str).append(  m_Lang.GetLanguageW(L"DIALOG", L"TiwtConfirm") ).c_str(), L"", MB_YESNO);
 				if (r == IDYES) {
-					doTwit();
+					if (twit_pic)
+						//_beginthread(doTwitwithPic, 0, 0);
+						doTwitwithPic(0);
+					else
+						doTwit(0);
 				}
 			}
 			break;
@@ -287,9 +305,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				GetWindowTextA(e1_hWnd, _id, 255);
 				GetWindowTextA(e2_hWnd, _pass, 255);
 				if (c_twit->getToken(_id, _pass)) {
-					MessageBox(m_hWnd, L"인증에 성공했습니다!\nAuthentication Succeed.", L"", NULL);
+					MessageBox(m_hWnd, m_Lang.GetLanguageW(L"DIALOG", L"AuthSucceed").c_str(), L"", NULL);
 				} else {
-					MessageBox(m_hWnd, L"인증에 실패했습니다! 계정을 확인해 주세요.\nAuthentication Failed. Check out your account", L"", NULL);
+					MessageBox(m_hWnd, m_Lang.GetLanguageW(L"DIALOG", L"AuthFailed").c_str(), L"", NULL);
 				}
 				break;
 			}
@@ -305,30 +323,33 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			hdc = BeginPaint(hWnd, &ps);
 
-			// TODO: Add any drawing code here...
 			swprintf(s, L"SCORE:%d", c_dect->LR2stat[LR_SCORE]);
-			SetRect(&rt, 10, 210, 200, 230);
+			SetRect(&rt, 10, 300, 200, 320);
 			DrawText(hdc, s, lstrlen(s), &rt, DT_LEFT);
 			
 			swprintf(s, L"%s", c_dect->LR2BMSTitle);
-			SetRect(&rt, 10, 230, 200, 250);
+			SetRect(&rt, 10, 320, 200, 340);
 			DrawText(hdc, s, lstrlen(s), &rt, DT_LEFT);
 			
 			swprintf(s, L"GUAGE:%d", c_dect->LR2stat[LR_GUAGE]);
-			SetRect(&rt, 10, 250, 200, 270);
+			SetRect(&rt, 10, 340, 200, 360);
 			DrawText(hdc, s, lstrlen(s), &rt, DT_LEFT);
 			
 			if (twit_Enabled && !twit_Twitted) {
 				lstrcpy(s, L"RESULT SCREEN - SUBMIT SCORE");
-				SetRect(&rt, 10, 280, 200, 300);
+				SetRect(&rt, 10, 360, 200, 380);
 				DrawText(hdc, s, lstrlen(s), &rt, DT_LEFT);
 			}
-			// Drawing END
 
 			EndPaint(hWnd, &ps);
 			break;
 		}
 	case WM_DESTROY:
+		delTray();
+		releaseKeyHook();
+		g_DLL.Eject();
+		m_log.endLog();
+		releaseSharedMemory();
 		removeMutex();
 		UnhookWindowsHookEx(hHook);
 		PostQuitMessage(0);
@@ -342,26 +363,59 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		} else {
 			if (!b_detected) {
 				playAlarm();
+				g_DLL.Inject(NULL, "LR2 beta3 version 100201", ".\\LR2DLL.dll");
 				b_detected = true;
+
+				alarmTray( m_Lang.GetLanguageW(L"HOOK", L"Tray").c_str() );
+				setMessage( m_Lang.GetLanguageA("HOOK", "Hook").c_str() );
 			}
 			changeTray(true);
 		}
 
 		InvalidateRect(hWnd, NULL, TRUE);
-		if (c_dect->isResultScreen() && !twit_Enabled &&
-			!(twit_high && !c_dect->isHighScore()) &&
-			!(twit_clear && !c_dect->isCleared())) {	// these two should be false
+		/* when Encountered Result Screen - with conditions */
+		if (c_dect->isResultScreen() && !twit_Enabled) {	
+			// info message for non-auto twit
+			if (twit_cancel || !twit_auto) 
+				if (opt4)
+					setMessage( m_Lang.GetLanguageA("HOOK", "ResultScreen").c_str() );
+
 			twit_Enabled = true;
 			twit_Twitted = false;
+			lr2_game = false;
 		}
+		/* when Result screen finished */
 		if (!c_dect->isResultScreen() && twit_Enabled) {
+			twit_cancel = false;
 			twit_Enabled = false;
 		}
+		/* when Game screen Started */
+		if (!lr2_game && c_dect->isPlaying()) {
+			lr2_game = true;
+			twit_cancel = false;	// 게임 도중에 캔슬 가능함
 
-		// automatic Twit
-		if (twit_auto && twit_Enabled && !twit_Twitted) {
-			doTwit();
-			twit_Twitted = true;
+			// info message for canceling
+			if (twit_auto && opt4)
+				setMessage( m_Lang.GetLanguageA("HOOK", "AutoTwit").c_str() );
+		}
+
+		/* Auto-Twitting Procedure */
+		if (twit_auto && twit_Enabled && !twit_Twitted && !twit_cancel) {
+			// check condition
+			if (!(twit_high && !c_dect->isHighScore()) &&
+			!(twit_clear && !c_dect->isCleared()) &&
+			c_dect->LR2stat[LR_SCORE] != 0) {
+				if (twit_pic) {
+					setMessage( m_Lang.GetLanguageA("HOOK", "ScreenShotWait").c_str() );
+					int val = CAPTURE_DELAY;
+					doTwitwithPic(&val);
+					//_beginthread(doTwitwithPic, 0, &val);
+				} else {
+					_beginthread(doTwit, 0, 0);
+				}
+
+				twit_Twitted = true;
+			}
 		}
 
 		break;
@@ -369,7 +423,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			TCHAR str[255];
 			c_dect->getLR2StatusString(str);
-			//MessageBox(hWnd, str, L"", MB_OK);
 			OutputDebugString(wstring(str).append(L"\n").c_str());
 			break;
 		}
@@ -416,7 +469,7 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 Redeclarations
 *****************************************/
 
-void doTwit() {
+void __cdecl doTwit(void *) {
 	// for cancel!
 	if (c_dect->LR2stat[LR_SCORE] == 0) return;
 	if (c_dect->isAutoPlaying()) return;
@@ -425,7 +478,6 @@ void doTwit() {
 	c_dect->getLR2StatusString(str);
 	str[140] = L'\0';	// max 140 char
 	m_log.writeLogLine(L"[Twit]", str);
-	//MessageBox(hWnd, str, L"", MB_OK);
 
 	char* pTemp = NULL;
 	int iLen = ::WideCharToMultiByte(CP_ACP, 0, str, -1, pTemp, 0, NULL, NULL);
@@ -435,10 +487,59 @@ void doTwit() {
 	string astr = string(pTemp);
 	delete [] pTemp;
 
-	OutputDebugStringA(astr.c_str());
 	if (c_twit->sendTwit( astr )) {
+		setMessage( m_Lang.GetLanguageA("HOOK", "NormalTwit").c_str() );
 		playAlarm();
 	}
+}
+
+void __cdecl doTwitwithPic(PVOID delaymilltime) {
+	// for cancel!
+	if (c_dect->LR2stat[LR_SCORE] == 0) return;
+	if (c_dect->isAutoPlaying()) return;
+
+
+	if (delaymilltime != 0) {
+		DWORD sleeptime = CAPTURE_DELAY;
+		Sleep(sleeptime);
+	}
+
+	// remove message
+	setMessage("");
+
+	TCHAR str[255];
+	c_dect->getLR2StatusString(str);
+	str[119] = L'\0';	// max 140-21 = 119 char
+	m_log.writeLogLine(L"TwitPic", str);
+
+	char* pTemp = NULL;
+	int iLen = ::WideCharToMultiByte(CP_ACP, 0, str, -1, pTemp, 0, NULL, NULL);
+	pTemp = new char[iLen+1];
+	::WideCharToMultiByte(CP_ACP, 0, str, -1, pTemp, iLen, NULL, NULL);
+	
+	Twitpic m_tpic;
+	m_tpic.set_account(c_twit->customerKey, c_twit->customerSecret,
+		c_twit->accessToken, c_twit->accessTokenSecret);
+	if (m_tpic.CaptureScreen())	// wait till finish
+	{
+		// status convert
+		string conv_msg;
+		cp949_to_utf8(string(pTemp), conv_msg);
+		char tmp[256];
+		strcpy(tmp, conv_msg.c_str());
+		
+		// remove after update
+		string res = m_tpic.upload_pic( m_tpic.LR2PicPath, tmp );
+		remove(m_tpic.LR2PicPath);
+		
+		setMessage( m_Lang.GetLanguageA("HOOK", "PicTwit").c_str() );
+		m_log.writeLogLine( res.c_str() );
+		playAlarm();
+	} else {
+		m_log.writeLogLine( "Failed to capture screen." );
+	}
+	
+	delete [] pTemp;
 }
 
 void doTray() {
@@ -456,6 +557,18 @@ void doTray() {
     SendMessage(m_hWnd, WM_SETICON, (WPARAM)TRUE, (LPARAM)nid.hIcon);
 }
 
+void alarmTray(const TCHAR *alarmMsg) {
+	NOTIFYICONDATA  nid;
+    nid.cbSize = NOTIFYICONDATA_V2_SIZE;
+	nid.hWnd = m_hWnd;
+    nid.uID = ID_NOTIFY;
+    nid.uFlags = NIF_INFO | NIF_MESSAGE;
+	nid.dwInfoFlags = NIIF_INFO;
+	lstrcpy(nid.szInfoTitle, L"LR2Twit");
+	lstrcpy(nid.szInfo, alarmMsg);
+    Shell_NotifyIcon(NIM_MODIFY, &nid);
+}
+
 void changeTray(bool detect) {
 	// 변경
 	NOTIFYICONDATA data;
@@ -465,10 +578,10 @@ void changeTray(bool detect) {
 	data.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
 	//strcpy( data.szTip, "메세지 도착" );
 	if (detect) {
-		data.hIcon = LoadIcon( hInst, MAKEINTRESOURCE(IDI_LR2_D) );
+		data.hIcon = LoadIcon( hInst, MAKEINTRESOURCE(IDI_LR2_E) );
 		lstrcpy(data.szTip, L"LR2Twit (detected)"); 
 	} else {
-		data.hIcon = LoadIcon( hInst, MAKEINTRESOURCE(IDI_LR2_E) );
+		data.hIcon = LoadIcon( hInst, MAKEINTRESOURCE(IDI_LR2_D) );
 		lstrcpy(data.szTip, L"LR2Twit (undetected)"); 
 	}
 	data.uCallbackMessage = ID_NOTIFY_CLICK;
@@ -489,10 +602,13 @@ void saveSettings() {
 	opt1 = (SendMessage(c1_hWnd,BM_GETCHECK,0,0) == BST_CHECKED);
 	opt2 = (SendMessage(c2_hWnd,BM_GETCHECK,0,0) == BST_CHECKED);
 	opt3 = (SendMessage(c3_hWnd,BM_GETCHECK,0,0) == BST_CHECKED);
+	opt4 = (SendMessage(c4_hWnd,BM_GETCHECK,0,0) == BST_CHECKED);
+	opt5 = (SendMessage(c5_hWnd,BM_GETCHECK,0,0) == BST_CHECKED);
 
 	twit_auto = opt1;
 	twit_clear = opt2;
 	twit_high = opt3;
+	twit_pic = opt5;
 
 
 	TCHAR _s[255];
@@ -504,6 +620,8 @@ void saveSettings() {
 	WritePrivateProfileStringW(L"LR2TWIT", L"TWIT_HIGHSCORE", _s, L".\\settings.ini" );
 	_itow(opt4, _s, 10);
 	WritePrivateProfileStringW(L"LR2TWIT", L"TWIT_SHORTCUTKEY", _s, L".\\settings.ini" );
+	_itow(opt5, _s, 10);
+	WritePrivateProfileStringW(L"LR2TWIT", L"TWIT_WITHPIC", _s, L".\\settings.ini" );
 }
 
 void loadSettings() {
@@ -525,10 +643,13 @@ void loadSettings() {
 	opt3 = _wtoi(_s);
 	GetPrivateProfileStringW(L"LR2TWIT", L"TWIT_SHORTCUTKEY", L"1", _s, 255, L".\\settings.ini");
 	opt4 = _wtoi(_s);
+	GetPrivateProfileStringW(L"LR2TWIT", L"TWIT_WITHPIC", L"1", _s, 255, L".\\settings.ini");
+	opt5 = _wtoi(_s);
 
 	twit_auto = opt1;
 	twit_clear = opt2;
 	twit_high = opt3;
+	twit_pic = opt5;
 }
 
 void setSettings() {
@@ -536,6 +657,7 @@ void setSettings() {
 	SendMessage(c2_hWnd,BM_SETCHECK,opt2?BST_CHECKED:BST_UNCHECKED,0);
 	SendMessage(c3_hWnd,BM_SETCHECK,opt3?BST_CHECKED:BST_UNCHECKED,0);
 	SendMessage(c4_hWnd,BM_SETCHECK,opt4?BST_CHECKED:BST_UNCHECKED,0);
+	SendMessage(c5_hWnd,BM_SETCHECK,opt5?BST_CHECKED:BST_UNCHECKED,0);
 }
 
 bool checkMutex()
@@ -559,4 +681,48 @@ void removeMutex()
 	ReleaseMutex(m_hMutex);
 	CloseHandle(m_hMutex);
 	m_hMutex = 0;
+}
+
+// shared memory
+BOOL setSharedMemory() {
+	hmm_LR2Message = CreateFileMapping(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, 256, L"LR2Message");
+	if (!hmm_LR2Message) {
+		return FALSE;
+	}
+	p_LR2Message = (char*)MapViewOfFile(hmm_LR2Message, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+	if (!p_LR2Message) {
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+BOOL releaseSharedMemory() {
+	UnmapViewOfFile(p_LR2Message);
+	CloseHandle(hmm_LR2Message);
+
+	return TRUE;
+}
+
+// auto release는 나중에 구현
+int g_Message_key = 10;
+void setMessage(const char *str) {
+	g_Message_key ++;
+	if (g_Message_key>255) g_Message_key = 0;
+	p_LR2Message[0] = (BYTE)g_Message_key;
+	strcpy(p_LR2Message+1, str);
+}
+
+void startKeyHook() {
+   hHook = SetWindowsHookEx(WH_KEYBOARD_LL, (HOOKPROC)HookProc,
+	   GetModuleHandle(NULL), NULL);
+   if (hHook) {
+	   m_log.writeLogLine(L"Successfully Hooked - WH_KEYBOARD_LL");
+   } else {
+	   m_log.writeLogLine(L"Hooking Failed - WH_KEYBOARD_LL");
+   }
+}
+
+void releaseKeyHook() {
+	UnhookWindowsHookEx(hHook);
 }

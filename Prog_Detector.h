@@ -77,6 +77,7 @@ public:
 	bool isCleared();
 	bool isResultScreen();
 	bool isAutoPlaying();
+	bool isPlaying();
 };
 
 /* formatString */

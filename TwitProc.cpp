@@ -1,41 +1,6 @@
 #include "stdafx.h"
 #include "TwitProc.h"
-
-#include "shellapi.h"
-#include "Log.h"
-
-bool cp949_to_utf8(const string& in, string& out)
-{
-	iconv_t cd;
-	bool ret = false;
-	const char* pszIn;
-	char* pszOut, *pos;
-	size_t inLen, outLen;
-	pszOut=NULL;
-	
-	cd = iconv_open("UTF-8",opt_encode);
-	if(cd == (iconv_t)(-1))
-	{
-		return false; 
-	}
-	
-	inLen = in.length();
-	pszIn = in.c_str();
-	
-	outLen = (inLen+1) * 2;
-	pos = pszOut = (char*)calloc(outLen, sizeof(char));
-	if(!pszOut) goto clean;
-	
-	if(iconv(cd, &pszIn, &inLen, &pos, &outLen)==-1)
-		goto clean;
-	out = pszOut;
-	ret = true;
-clean:
-	iconv_close(cd);
-	if(pszOut) free(pszOut);
-	return ret;
-}
-
+#include "conv.h"
 
 /*
 TwitProc::TwitProc() {
@@ -52,6 +17,9 @@ TwitProc::TwitProc() {
 
 TwitProc::TwitProc(Log *_l) {
 	l = _l;
+
+	strcpy(customerKey, "v5AS0GWeiJ1ovbGHWY50w");
+	strcpy(customerSecret, "TPI2qwpuLpj6Yj604zPoQMC0BaLwMGxHK6EYx8faPpc");
 }
 
 bool TwitProc::loadToken() {
@@ -59,8 +27,8 @@ bool TwitProc::loadToken() {
 	
     /* OAuth flow begins */
     /* Step 0: Set OAuth related params. These are got by registering your app at twitter.com */
-    twitterObj.getOAuth().setConsumerKey( std::string( "v5AS0GWeiJ1ovbGHWY50w" ) );
-    twitterObj.getOAuth().setConsumerSecret( std::string( "TPI2qwpuLpj6Yj604zPoQMC0BaLwMGxHK6EYx8faPpc" ) );
+    twitterObj.getOAuth().setConsumerKey( std::string( customerKey ) );
+    twitterObj.getOAuth().setConsumerSecret( std::string( customerSecret ) );
 
     /* Step 1: Check if we alredy have OAuth access token from a previous run */
     std::string myOAuthAccessTokenKey("");
@@ -89,6 +57,10 @@ bool TwitProc::loadToken() {
 
         twitterObj.getOAuth().setOAuthTokenKey( myOAuthAccessTokenKey );
         twitterObj.getOAuth().setOAuthTokenSecret( myOAuthAccessTokenSecret );
+
+		// copy key
+		strcpy(accessToken, myOAuthAccessTokenKey.c_str() );
+		strcpy(accessTokenSecret, myOAuthAccessTokenSecret.c_str() );
 	} else {
 		return false; 
 	}
@@ -97,6 +69,10 @@ bool TwitProc::loadToken() {
 }
 
 bool TwitProc::getToken(string id, string pass) {
+	// 기존 토큰 삭제
+	DeleteFileA("twitterClient_token_key.txt");
+	DeleteFileA("twitterClient_token_secret.txt");
+
     std::string tmpStr;
     std::string replyMsg;
     char tmpBuf[1024];
@@ -107,8 +83,8 @@ bool TwitProc::getToken(string id, string pass) {
 
     /* OAuth flow begins */
     /* Step 0: Set OAuth related params. These are got by registering your app at twitter.com */
-    twitterObj.getOAuth().setConsumerKey( std::string( "v5AS0GWeiJ1ovbGHWY50w" ) );
-    twitterObj.getOAuth().setConsumerSecret( std::string( "TPI2qwpuLpj6Yj604zPoQMC0BaLwMGxHK6EYx8faPpc" ) );
+    twitterObj.getOAuth().setConsumerKey( std::string( customerKey ) );
+    twitterObj.getOAuth().setConsumerSecret( std::string( customerSecret ) );
 
     /* Step 1: Check if we alredy have OAuth access token from a previous run */
     std::string myOAuthAccessTokenKey("");
@@ -116,77 +92,60 @@ bool TwitProc::getToken(string id, string pass) {
     std::ifstream oAuthTokenKeyIn;
     std::ifstream oAuthTokenSecretIn;
 
-        /* Step 2: Get request token key and secret */
-        std::string authUrl;
-        twitterObj.oAuthRequestToken( authUrl );
+	/* Step 2: Get request token key and secret */
+	std::string authUrl;
+	twitterObj.oAuthRequestToken( authUrl );
 
-        /* Step 3: Get PIN  */
-        memset( tmpBuf, 0, 1024 );
-        /*printf( "\nDo you want to visit twitter.com for PIN (0 for no; 1 for yes): " );
-        gets( tmpBuf );
-        tmpStr = tmpBuf;
-        if( std::string::npos != tmpStr.find( "1" ) )
-        {*/
-            /* Ask user to visit twitter.com auth page and get PIN */
-          /*  memset( tmpBuf, 0, 1024 );
-            MessageBox(NULL, L"\nPlease visit this link in web browser and authorize this application.", L"", NULL );
-			WinExec(authUrl.c_str(), NULL);
-            //printf( "\nEnter the PIN provided by twitter: " );
-            gets( tmpBuf );
-            tmpStr = tmpBuf;
-            twitterObj.getOAuth().setOAuthPin( tmpStr );
-       /* }
-        else
-        {*/
-            /* Else, pass auth url to twitCurl and get it via twitCurl PIN handling */
+	/* Step 3: Get PIN  */
+	memset( tmpBuf, 0, 1024 );
+	bool res = twitterObj.oAuthHandlePIN( authUrl );
+	if (!res) {
+		if (MessageBox(NULL, L"Token 가져오기에 실패하였습니다. 수동으로 Token을 가져오시겠습니까 'ㅠ'?", L"", MB_YESNO) == IDYES) {
+			memset( tmpBuf, 0, 1024 );
+			//WinExec(authUrl.c_str(), NULL);
+			ShellExecuteA(NULL, "Open", authUrl.c_str(), NULL, NULL, SW_SHOW);
+			AllocConsole();
+			freopen("CONOUT$", "wt", stdout);
+			freopen("CONIN$", "r", stdin);
+			printf("From this site:%s\nEnter PIN :\n", authUrl.c_str());
+			gets( tmpBuf );
+			FreeConsole();
+			tmpStr = tmpBuf;
+			twitterObj.getOAuth().setOAuthPin( tmpStr );
+		} else {
+			return false;
+		}
+	}
+	//}*/
 
-            bool res = twitterObj.oAuthHandlePIN( authUrl );
-			if (!res) {
-				if (MessageBox(NULL, L"Token 가져오기에 실패하였습니다. 수동으로 Token을 가져오시겠습니까 'ㅠ'?", L"", MB_YESNO) == IDYES) {
-					memset( tmpBuf, 0, 1024 );
-					//WinExec(authUrl.c_str(), NULL);
-					ShellExecuteA(NULL, "Open", authUrl.c_str(), NULL, NULL, SW_SHOW);
-					AllocConsole();
-					freopen("CONOUT$", "wt", stdout);
-					freopen("CONIN$", "r", stdin);
-					printf("From this site:%s\nEnter PIN :\n", authUrl.c_str());
-					gets( tmpBuf );
-					FreeConsole();
-					tmpStr = tmpBuf;
-					twitterObj.getOAuth().setOAuthPin( tmpStr );
-				} else {
-					return false;
-				}
-			}
-        //}*/
+	/* Step 4: Exchange request token with access token */
+	twitterObj.oAuthAccessToken();
 
-        /* Step 4: Exchange request token with access token */
-        twitterObj.oAuthAccessToken();
+	/* Step 5: Now, save this access token key and secret for future use without PIN */
+	twitterObj.getOAuth().getOAuthTokenKey( myOAuthAccessTokenKey );
+	twitterObj.getOAuth().getOAuthTokenSecret( myOAuthAccessTokenSecret );
 
-        /* Step 5: Now, save this access token key and secret for future use without PIN */
-        twitterObj.getOAuth().getOAuthTokenKey( myOAuthAccessTokenKey );
-        twitterObj.getOAuth().getOAuthTokenSecret( myOAuthAccessTokenSecret );
+	/* Step 6: Save these keys in a file or wherever */
+	std::ofstream oAuthTokenKeyOut;
+	std::ofstream oAuthTokenSecretOut;
 
-        /* Step 6: Save these keys in a file or wherever */
-        std::ofstream oAuthTokenKeyOut;
-        std::ofstream oAuthTokenSecretOut;
+	oAuthTokenKeyOut.open( "twitterClient_token_key.txt" );
+	oAuthTokenSecretOut.open( "twitterClient_token_secret.txt" );
 
-		DeleteFileA("twitterClient_token_key.txt");
-		DeleteFileA("twitterClient_token_secret.txt");
+	oAuthTokenKeyOut.clear();
+	oAuthTokenSecretOut.clear();
 
-        oAuthTokenKeyOut.open( "twitterClient_token_key.txt" );
-        oAuthTokenSecretOut.open( "twitterClient_token_secret.txt" );
+	oAuthTokenKeyOut << myOAuthAccessTokenKey.c_str();
+	oAuthTokenSecretOut << myOAuthAccessTokenSecret.c_str();
 
-        oAuthTokenKeyOut.clear();
-        oAuthTokenSecretOut.clear();
+	oAuthTokenKeyOut.close();
+	oAuthTokenSecretOut.close();
+	/* OAuth flow ends */
 
-        oAuthTokenKeyOut << myOAuthAccessTokenKey.c_str();
-        oAuthTokenSecretOut << myOAuthAccessTokenSecret.c_str();
 
-        oAuthTokenKeyOut.close();
-        oAuthTokenSecretOut.close();
-    /* OAuth flow ends */
-
+	// copy key
+	strcpy(accessToken, myOAuthAccessTokenKey.c_str() );
+	strcpy(accessTokenSecret, myOAuthAccessTokenSecret.c_str() );
 
 	return true;
 }

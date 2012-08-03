@@ -33,6 +33,15 @@
     <ClCompile Include="DLLInjector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Twitpic.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="conv.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="lang.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Log.h">
@@ -59,21 +68,27 @@
     <ClInclude Include="DLLInjector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Twitpic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="conv.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="lang.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="ico128.ico">
+    <None Include="ReadMe.txt" />
+    <None Include="lr2ico_disabled.ico">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="lr2_e1.ico">
-      <Filter>Resource Files</Filter>
-    </None>
-    <None Include="LR2Twit.ico">
+    <None Include="lr2ico_normal.ico">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="small.ico">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="ReadMe.txt" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="LR2Twit.rc">

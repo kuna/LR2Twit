@@ -3,7 +3,7 @@
  *  @file oauth.h
  *  @author Robin Gareus <robin@gareus.org>
  *
- * Copyright 2007-2010 Robin Gareus <robin@gareus.org>
+ * Copyright 2007-2011 Robin Gareus <robin@gareus.org>
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,22 +24,21 @@
  * THE SOFTWARE.
  *
  */
-
 #ifndef _OAUTH_H
 #define _OAUTH_H      1 
 
 #ifndef DOXYGEN_IGNORE
 // liboauth version
-#define LIBOAUTH_VERSION "0.8.9"
+#define LIBOAUTH_VERSION "0.9.7"
 #define LIBOAUTH_VERSION_MAJOR  0
-#define LIBOAUTH_VERSION_MINOR  8
-#define LIBOAUTH_VERSION_MICRO  9
+#define LIBOAUTH_VERSION_MINOR  9
+#define LIBOAUTH_VERSION_MICRO  7
 
 //interface revision number
 //http://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
-#define LIBOAUTH_CUR  7
-#define LIBOAUTH_REV  0
-#define LIBOAUTH_AGE  7
+#define LIBOAUTH_CUR  8
+#define LIBOAUTH_REV  4
+#define LIBOAUTH_AGE  8
 #endif
 
 #ifdef __GNUC__
@@ -54,6 +53,10 @@
 #else
 #    define attribute_deprecated
 #endif
+#endif
+
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 /** \enum OAuthMethod
@@ -308,11 +311,16 @@ void oauth_free_array(int *argcp, char ***argvp);
  *
  * returns 0 (false) if strings are not equal, and 1 (true) if strings are equal.
  */
-int oauth_time_indepenent_equals_n(const char* a, const char* b, size_t len_a, size_t len_b);
+int oauth_time_independent_equals_n(const char* a, const char* b, size_t len_a, size_t len_b);
+
+/**
+ * @deprecated Use oauth_time_independent_equals_n() instead.
+ */
+int oauth_time_indepenent_equals_n(const char* a, const char* b, size_t len_a, size_t len_b) attribute_deprecated;
 
 /**
  * compare two strings in constant-time.
- * wrapper to \ref oauth_time_indepenent_equals_n 
+ * wrapper to \ref oauth_time_independent_equals_n 
  * which calls strlen() for each argument.
  *
  * @param a string to compare 
@@ -320,7 +328,12 @@ int oauth_time_indepenent_equals_n(const char* a, const char* b, size_t len_a, s
  *
  * returns 0 (false) if strings are not equal, and 1 (true) if strings are equal.
  */
-int oauth_time_indepenent_equals(const char* a, const char* b);
+int oauth_time_independent_equals(const char* a, const char* b);
+
+/**
+ * @deprecated Use oauth_time_independent_equals() instead.
+ */
+int oauth_time_indepenent_equals(const char* a, const char* b) attribute_deprecated;
 
 /**
  * calculate OAuth-signature for a given HTTP request URL, parameters and oauth-tokens.
@@ -742,6 +755,10 @@ char *oauth_send_data_with_callback      (const char *u,
                                           void (*callback)(void*,int,size_t,size_t),
                                           void *callback_data,
                                           const char *httpMethod);
+
+#ifdef __cplusplus
+}       /* extern "C" */
+#endif  /* __cplusplus */
 
 #endif
 /* vi:set ts=8 sts=2 sw=2: */

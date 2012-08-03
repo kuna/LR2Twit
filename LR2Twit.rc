@@ -15,13 +15,11 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// Korean resources
+// 한국어(대한민국) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_KOR)
-#ifdef _WIN32
 LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 #pragma code_page(949)
-#endif //_WIN32
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -30,17 +28,17 @@ LANGUAGE LANG_KOREAN, SUBLANG_DEFAULT
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_LR2TWIT             ICON                    "LR2Twit.ico"
+IDI_LR2TWIT             ICON                    "lr2ico_normal.ico"
 IDI_SMALL               ICON                    "small.ico"
-IDI_LR2_E               ICON                    "ico128.ico"
-IDI_LR2_D               ICON                    "lr2_e1.ico"
+IDI_LR2_E               ICON                    "lr2ico_normal.ico"
+IDI_LR2_D               ICON                    "lr2ico_disabled.ico"
 
 /////////////////////////////////////////////////////////////////////////////
 //
 // Menu
 //
 
-IDC_LR2TWIT MENU 
+IDC_LR2TWIT MENU
 BEGIN
     POPUP "&File"
     BEGIN
@@ -52,7 +50,7 @@ BEGIN
     END
 END
 
-IDR_NOTIFY MENU 
+IDR_NOTIFY MENU
 BEGIN
     POPUP "menu"
     BEGIN
@@ -67,7 +65,7 @@ END
 // Accelerator
 //
 
-IDC_LR2TWIT ACCELERATORS 
+IDC_LR2TWIT ACCELERATORS
 BEGIN
     "?",            IDM_ABOUT,              ASCII,  ALT
     "/",            IDM_ABOUT,              ASCII,  ALT
@@ -124,13 +122,13 @@ END
 // String Table
 //
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     IDS_APP_TITLE           "LR2Twit"
     IDC_LR2TWIT             "LR2TWIT"
 END
 
-#endif    // Korean resources
+#endif    // 한국어(대한민국) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

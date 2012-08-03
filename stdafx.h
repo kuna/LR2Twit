@@ -38,7 +38,8 @@
 extern int opt1; // auto twit
 extern int opt2; // clear
 extern int opt3; // high score
-extern int opt4; // high score
+extern int opt4; // twitshortcutkey
+extern int opt5; // twit with pic
 extern TCHAR opt_lr2title[255];
 extern char opt_encode[255];
 extern TCHAR opt_message[255];

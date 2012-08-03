@@ -243,19 +243,6 @@ Detector::Detector(Log *_l) {
 
 	l = _l;
 	OSDetect();
-
-/*	LR2mm["Score"] = 0x00127294;
-	LR2mm["PGr"] = 0x0012F48C;
-	LR2mm["Gr"] = 0x0012F488;
-	LR2mm["Gd"] = 0x0012F484;
-	LR2mm["Bd"] = 0x0012F480;
-	LR2mm["Pr"] = 0x0012F47C;
-	LR2mm["EXScore"] = 0x00127280;
-	LR2mm["EXHighScore"] = 0x0012F490;
-	LR2mm["MaxCombo"] = 0x0012F4B0;
-	LR2mm["Title"] = 0x0193FFB8;
-	LR2mm["Diff"] = 0x00096518;
-	LR2mm["Guage"] = 0x0008F840;*/
 }
 
 void Detector::OSDetect() {
@@ -373,9 +360,6 @@ bool Detector::getLR2Status() {
 	lstrcpy(LR2BMSTitle, wstr);
 */
 
-	//OutputDebugStringA(string(_str).append("\n").c_str());
-	//OutputDebugStringW(wstring(nstr).append(L"\n").c_str());
-
 	ReadProcessMemory(LR2h, (LPVOID)(LR_GUAGENUM+_OFFSET), &LR2Guage, sizeof(LR2Guage), &rl);
 
 	return true;
@@ -408,6 +392,12 @@ bool Detector::isResultScreen() {
 	if (!LR2hWnd) return false;
 	if (!IsWindow(LR2hWnd)) return false;
 	return (LR2stat[LR_STAT] == 2);
+}
+
+bool Detector::isPlaying() {
+	if (!LR2hWnd) return false;
+	if (!IsWindow(LR2hWnd)) return false;
+	return (LR2stat[LR_STAT] == 0);
 }
 
 void Detector::getLR2StatusString(TCHAR *str)

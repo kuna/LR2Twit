@@ -1,4 +1,4 @@
-LR2Twit
+﻿LR2Twit
 by kuna - http://kuna.wo.tc
 Twitter - @kuna_KR
 Released - 10.05.20
@@ -37,9 +37,15 @@ ver 1.0d - 7/8
  - level.txt 인풋 엔진 수정
  - 프로그램 종료시 T키 바로가기 업로드 버그 수정
 
- ver 1.0e alpha1 - 7/26 (커밋용)
+ver 1.0e alpha1 - 7/26 (커밋용)
  - DLL Injector 기본 클래스 구현
  - twitcurl, libcurl등의 모든 라이브러리들과 본체 프로그램을 vc2010으로 포팅 완료
+
+ver 2.0 alpha1 - 8/3
+ - DLL Injector 구현
+ - 스크린샷 트윗 기능 구현
+ - Destroy시 리소스가 제대로 해제되지 않던 일부 문제 개선
+ - 자동트윗 취소, 툴팁, Language Pack, DirectX Overlay 알림 등의 편의성 기능 추가
 
 -----------------------------------------------------------------------------------
 	☆ 사용법
@@ -98,9 +104,5 @@ TWIT_ENCODING=SHIFT_JIS
 	☆ Future plan
 -----------------------------------------------------------------------------------
  - supporting ruv-it!, Trilogy, Stepmania
- - DirectX Overlay
- - auto Picting and uploading result scr to yfrog
  - custom judgement system for LR2
- - 発狂/Overjoy difficulty supporting and IIDX BMS Auto filtering (you may can change the option)
- - Character Encoding change
  - Multi/Alternative Twitter Account

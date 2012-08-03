@@ -11,6 +11,7 @@
  int opt2; // clear
  int opt3; // high score
  int opt4; // 't' press key
+ int opt5;
  TCHAR opt_lr2title[255];
  char opt_encode[255];
  TCHAR opt_message[255];
