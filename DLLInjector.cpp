@@ -23,8 +23,6 @@ BOOL DLLInjector::DLL_Injection(int PID, char* PATH) {
 		strcat(str, npath+2);
 		strcpy(npath, str);
 	}
-	OutputDebugStringA(npath);
-	OutputDebugStringA("\n");
 
 	HANDLE hProcess, hThread;
 	HMODULE hMod;

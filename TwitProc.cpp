@@ -13,8 +13,6 @@ TwitProc::TwitProc() {
 
 }*/
 
-// http://code.google.com/p/twitcurl/source/browse/trunk/twitterClient/twitterClient.cpp
-
 TwitProc::TwitProc(Log *_l) {
 	l = _l;
 

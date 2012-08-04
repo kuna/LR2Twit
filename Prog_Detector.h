@@ -27,12 +27,15 @@ using namespace std;
 #define LR_GENRE (0x000B1764)	// addr pointer
 #define LR_DIFF (0x00096518)
 #define LR_GUAGE (0x0008F840)
-#define LR_STAT (0x0008C3FC)
 #define LR_GUAGENUM (0x00127200)
 #define LR_AUTO (0x00096668)
 #define LR_AUTOSCR (0x0008F870)
 #define LR_IRTOT (0x0012FB10)
 #define LR_IRNOW (0x0012FB54)
+
+#define LR_ISMENU (0x00099C5C)
+#define LR_ISPLAYING (0x000986EC)
+#define LR_ISRESULT (0x00098704)
 
 class Detector {
 private:
@@ -54,7 +57,7 @@ private:
 	void OSDetect();
 	Log *l;
 
-	void checkDiffLevel(TCHAR *title, TCHAR *diff);
+	void checkDiffLevel(TCHAR *title, TCHAR *diff, int totalNotCnt);
 	bool IsIIDXBMS(TCHAR *title);
 public:
 	Detector(Log *_l);
@@ -78,6 +81,10 @@ public:
 	bool isResultScreen();
 	bool isAutoPlaying();
 	bool isPlaying();
+	bool isMenu();
+
+	bool isLR2Vaild();
+	void setRecordAlways();
 };
 
 /* formatString */

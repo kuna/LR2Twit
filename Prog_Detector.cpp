@@ -297,6 +297,20 @@ int Detector::getMemValInt(LPVOID addr) {
 	return _i;
 }
 
+/* for trim func */
+wstring trimString( const wstring& s )
+{
+	typedef wstring::const_iterator StringIter;
+
+	int begin = s.find_first_not_of(L' ');
+	if (begin<0) begin = 0;
+
+	int end	= s.find_last_not_of(L' ');
+	if (end < 0) end = 0;
+
+	return s.substr( begin, end-begin+1 );
+}
+
 bool Detector::getLR2Status() {
 	if (!LR2hWnd) return false;
 	if (!IsWindow(LR2hWnd)) return false;
@@ -315,12 +329,15 @@ bool Detector::getLR2Status() {
 	LR2stat[LR_MC] = getMemValInt((LPVOID)(LR_MC+_OFFSET));
 	LR2stat[LR_NC] = getMemValInt((LPVOID)(LR_NC+_OFFSET));
 	LR2stat[LR_DIFF] = getMemValInt((LPVOID)(LR_DIFF+_OFFSET));
-	LR2stat[LR_STAT] = getMemValInt((LPVOID)(LR_STAT+_OFFSET));
 	LR2stat[LR_GUAGE] = getMemValInt((LPVOID)(LR_GUAGE+_OFFSET));
 	LR2stat[LR_AUTO] = getMemValInt((LPVOID)(LR_AUTO+_OFFSET));
 	LR2stat[LR_AUTOSCR] = getMemValInt((LPVOID)(LR_AUTOSCR+_OFFSET));
 	LR2stat[LR_IRTOT] = getMemValInt((LPVOID)(LR_IRTOT+_OFFSET));
 	LR2stat[LR_IRNOW] = getMemValInt((LPVOID)(LR_IRNOW+_OFFSET));
+	
+	LR2stat[LR_ISMENU] = getMemValInt((LPVOID)(LR_ISMENU+_OFFSET));
+	LR2stat[LR_ISPLAYING] = getMemValInt((LPVOID)(LR_ISPLAYING+_OFFSET));
+	LR2stat[LR_ISRESULT] = getMemValInt((LPVOID)(LR_ISRESULT+_OFFSET));
 
 	int _i, _addr;
 	SIZE_T rl;
@@ -340,7 +357,7 @@ bool Detector::getLR2Status() {
 	_addr = getMemValInt((LPVOID)(LR_TITLE+_OFFSET));
 	ReadProcessMemory(LR2h, (LPVOID)_addr, _str, sizeof(_str), &rl);
 	eucjp_to_cp949(string(_str), nstr);
-	lstrcpy(LR2BMSTitle, nstr.c_str());
+	lstrcpy(LR2BMSTitle, trimString(nstr).c_str());	// trim
 
 	_addr = getMemValInt((LPVOID)(LR_ARTIST+_OFFSET));
 	ReadProcessMemory(LR2h, (LPVOID)_addr, _str, sizeof(_str), &rl);
@@ -391,13 +408,19 @@ bool Detector::isCleared() {
 bool Detector::isResultScreen() {
 	if (!LR2hWnd) return false;
 	if (!IsWindow(LR2hWnd)) return false;
-	return (LR2stat[LR_STAT] == 2);
+	return (LR2stat[LR_ISRESULT] == 1);
 }
 
 bool Detector::isPlaying() {
 	if (!LR2hWnd) return false;
 	if (!IsWindow(LR2hWnd)) return false;
-	return (LR2stat[LR_STAT] == 0);
+	return (LR2stat[LR_ISPLAYING] == 1);
+}
+
+bool Detector::isMenu() {
+	if (!LR2hWnd) return false;
+	if (!IsWindow(LR2hWnd)) return false;
+	return (LR2stat[LR_ISMENU] == 1);
 }
 
 void Detector::getLR2StatusString(TCHAR *str)
@@ -473,7 +496,7 @@ void Detector::getLR2StatusString(TCHAR *str)
 	_itow(LR2stat[LR_DIFF], _s, 10);
 	wcscpy(s7, L"¡Ù");
 	wcscat(s7, _s);
-	checkDiffLevel(LR2BMSTitle, s7);
+	checkDiffLevel(LR2BMSTitle, s7, LR2stat[LR_NC]);
 
 	replace_str(str, L"[RANK]", s3);
 	replace_str(str, L"[GUAGE]", s2);
@@ -504,10 +527,11 @@ void Detector::getLR2StatusString(TCHAR *str)
 		replace_str(str, L"[AUTO]", L"");
 	swprintf(_s, L"%.2f", rate);
 	replace_str(str, L"[RATE]", _s);
+	
+	OutputDebugString(str);
+	OutputDebugString(L"\n");
 
-	/*swprintf(str, LR2FormatStr, s1, s2, LR2stat[LR_DIFF], LR2stat[LR_EXS], s0, rate, s3,
-		LR2stat[LR_PG],LR2stat[LR_GR],LR2stat[LR_GD],LR2stat[LR_BD],LR2stat[LR_PR],LR2stat[LR_MC] );
-	*/return;
+	return;
 }
 
 /**depreciated*/
@@ -556,7 +580,7 @@ void Detector::replace_str(TCHAR *org, TCHAR *find, TCHAR *n) {
 	//return result;
 }
 
-void Detector::checkDiffLevel(TCHAR *title, TCHAR *diff)
+void Detector::checkDiffLevel(TCHAR *title, TCHAR *diff, int totalNoteCnt = 0)
 {
 	FILE *fp = fopen("level.txt", "rb");
 	if (!fp) return;
@@ -575,9 +599,20 @@ void Detector::checkDiffLevel(TCHAR *title, TCHAR *diff)
 			continue;
 		if (memcmp(buf,L"lvl",6) == 0) {
 			wcscpy(ndiff, buf+4);
-		} else if (match(buf, title)/*wcscmp(buf, tt)==0*/) {
+		} else if (memcmp(buf,L"<n>",6) == 0) {
+			// custom option - note
+			TCHAR notecnt[10];
+			fgetws(notecnt, sizeof(notecnt), fp);
+			int nc = _wtoi(notecnt);
+
+			if (match(buf+4, title) && totalNoteCnt == nc) {
+				wcscpy(diff, ndiff);
+				wcscpy(title, buf+4);
+			}
+			return;
+		} else if (match(buf, title)) {
 			wcscpy(diff, ndiff);
-			wcscpy(title, buf);// char change
+			wcscpy(title, buf);
 			return;
 		}
 	}
@@ -637,4 +672,17 @@ BOOL match(TCHAR *fname, TCHAR *filter) {
 	if (j != wcslen(fname)) return FALSE;
 
 	return TRUE;
+}
+
+bool Detector::isLR2Vaild() {
+	if (!LR2hWnd) return false;
+	if (!IsWindow(LR2hWnd)) return false;
+	return true;
+}
+
+void Detector::setRecordAlways(){
+	DWORD addr = 0x000EF8BC + _OFFSET;
+	int val = 1;
+	SIZE_T len;
+	WriteProcessMemory(LR2h, (LPVOID)(addr), &val, sizeof(val), &len);
 }

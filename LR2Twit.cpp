@@ -40,7 +40,7 @@ HHOOK hHook;
 LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
 	if (nCode == HC_ACTION) {
 		int bControlKeyDown = GetAsyncKeyState (VK_CONTROL);
-		if (bControlKeyDown && wParam == WM_KEYUP && opt4) {
+		if (bControlKeyDown && wParam == WM_KEYUP && opt4 && c_dect->isLR2Vaild()) {
 			if (((EVENTMSG*)lParam)->message == 'T' && c_dect->isResultScreen()) {
 				doTwit(0);
 			}
@@ -55,6 +55,10 @@ LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
 				} else {
 					setMessage( m_Lang.GetLanguageA("HOOK", "TwitRetry").c_str() );
 				}
+			}
+			if (((EVENTMSG*)lParam)->message == 'Q') {
+				c_dect->setRecordAlways();
+				setMessage( m_Lang.GetLanguageA("HOOK", "RecordAlways").c_str() );
 			}
 			if (((EVENTMSG*)lParam)->message == 'A') {
 				// REInspect
@@ -355,6 +359,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		PostQuitMessage(0);
 		break;
 	case WM_TIMER:
+		InvalidateRect(hWnd, NULL, TRUE);
+
 		if (!c_dect->getLR2Status()) {
 			changeTray(false);
 			c_dect->detectLR2();
@@ -372,17 +378,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			changeTray(true);
 		}
 
-		InvalidateRect(hWnd, NULL, TRUE);
 		/* when Encountered Result Screen - with conditions */
 		if (c_dect->isResultScreen() && !twit_Enabled) {	
 			// info message for non-auto twit
-			if (twit_cancel || !twit_auto) 
+			if (twit_cancel || !twit_auto || (twit_auto && !c_dect->isCleared())) 
 				if (opt4)
 					setMessage( m_Lang.GetLanguageA("HOOK", "ResultScreen").c_str() );
 
 			twit_Enabled = true;
 			twit_Twitted = false;
-			lr2_game = false;
 		}
 		/* when Result screen finished */
 		if (!c_dect->isResultScreen() && twit_Enabled) {
@@ -398,13 +402,16 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			if (twit_auto && opt4)
 				setMessage( m_Lang.GetLanguageA("HOOK", "AutoTwit").c_str() );
 		}
+		/* when Not Game screen */
+		if (!c_dect->isPlaying()) {
+			lr2_game = false;
+		}
 
 		/* Auto-Twitting Procedure */
 		if (twit_auto && twit_Enabled && !twit_Twitted && !twit_cancel) {
 			// check condition
 			if (!(twit_high && !c_dect->isHighScore()) &&
-			!(twit_clear && !c_dect->isCleared()) &&
-			c_dect->LR2stat[LR_SCORE] != 0) {
+			!(twit_clear && !c_dect->isCleared())) {
 				if (twit_pic) {
 					setMessage( m_Lang.GetLanguageA("HOOK", "ScreenShotWait").c_str() );
 					int val = CAPTURE_DELAY;
@@ -526,6 +533,7 @@ void __cdecl doTwitwithPic(PVOID delaymilltime) {
 		strcpy(tmp, conv_msg.c_str());
 		
 		// remove after update
+		setMessage( m_Lang.GetLanguageA("HOOK", "PicTwitWait").c_str() );
 		string res = m_tpic.upload_pic( m_tpic.LR2PicPath, tmp );
 		remove(m_tpic.LR2PicPath);
 		
@@ -628,7 +636,7 @@ void loadSettings() {
 	lstrcpy(opt_lr2title, _s);
 	GetPrivateProfileStringW(L"LR2TWIT", L"LR2_AUTOTWIT", L"1", _s, 255, L".\\settings.ini");
 	opt1 = _wtoi(_s);
-	GetPrivateProfileStringW(L"LR2TWIT", L"TWIT_MESSAGE", L"<[TITLE] ([RANK]) [GUAGE] [RESULT]!![AUTO] [RATE]%([RANK]) - [EXS]/[EXMS] (PG[PG]/GR[GR]/GD[GD]/PR[PR]/BD[BD], [MC] Combo) #LR2", _s, 255, L".\\settings.ini");
+	GetPrivateProfileStringW(L"LR2TWIT", L"TWIT_MESSAGE", L"<[TITLE] ([DIFF]) [GUAGE] [RESULT]!![AUTO] [RATE]%([RANK]) - [EXS]/[EXMS] (PG[PG]/GR[GR]/GD[GD]/PR[PR]/BD[BD], [MC] Combo) #LR2", _s, 255, L".\\settings.ini");
 	lstrcpy(opt_message, _s);
 	GetPrivateProfileStringW(L"LR2TWIT", L"TWIT_ENCODING", L"CP949", _s, 255, L".\\settings.ini");
 	wcstombs(opt_encode, _s, 255);
