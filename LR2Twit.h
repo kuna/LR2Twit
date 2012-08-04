@@ -49,6 +49,7 @@ BOOL releaseSharedMemory();
 void setMessage( const char *str);
 
 HWND m_hWnd;
+bool lr2_injectstartup = true;
 bool lr2_game = false;
 bool twit_cancel = false;
 

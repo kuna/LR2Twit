@@ -96,8 +96,18 @@ TWIT_ENCODING=SHIFT_JIS
 [IRTOT] - Internet Ranking total users
 [IRNOW] - my max Internet Ranking
 
-4. 건의사항은 @kuna_KR에 mention 해 주세요!
+4. (LR2Twit ver 2.0 alpha 부터 적용되는 내용입니다)
+ LR2Twit에서는 여러 단축키를 지원하는데, 이 기능을 사용하려면 옵션에서 "바로가기 키 활성화"를 체크해 주세요.
+ - Ctrl+A : DLL Re-Injection
+ - Ctrl+Y : 게임 도중 자동 트윗 취소
+ - Ctrl+T : 리절트 화면에서 텍스트 트윗
+ - Ctrl+Y : 리절트 화면에서 스크린샷 트윗 (딜레이 없음) - 주:자동 스크린샷 트윗의 딜레이는 3.5초 입니다.
 
+5. 전체화면에서 DX Overlay/Screenshot Twit 기능을 사용하려면, 먼저 "settings.ini"에서 "TWIT_DLLAUTOINJECTATSTARTUP" 값을 "0"으로 설정해 주신 후, LR2Twit 프로그램을 켠 후에 Lunatic Rave 2를 전체화면 상태에서 "Ctrl+A"로 수동 DLL Injection 시켜주셔야 합니다.(alpha2) ... 프로그램 종특인지, 화면 모드가 수정되면 DLL Injection이 죽어버립니다 ㅡ,.ㅡ
+
+
+
+＊건의사항은 @kuna_KR에 mention 해 주세요!
 
 
 -----------------------------------------------------------------------------------

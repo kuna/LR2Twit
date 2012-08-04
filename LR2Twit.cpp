@@ -58,7 +58,7 @@ LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
 			}
 			if (((EVENTMSG*)lParam)->message == 'A') {
 				// REInspect
-				g_DLL.Inject(NULL, "LR2 beta3 version 100201", ".\\LR2DLL.dll");
+				g_DLL.Inject(NULL, "LR2 beta3 version 100201", ".\\\\LR2DLL.dll");
 				setMessage("DLL Re-Injected.");
 			}
 		}
@@ -363,7 +363,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		} else {
 			if (!b_detected) {
 				playAlarm();
-				g_DLL.Inject(NULL, "LR2 beta3 version 100201", ".\\LR2DLL.dll");
+				if (lr2_injectstartup) g_DLL.Inject(NULL, "LR2 beta3 version 100201", ".\\\\LR2DLL.dll");
 				b_detected = true;
 
 				alarmTray( m_Lang.GetLanguageW(L"HOOK", L"Tray").c_str() );
@@ -421,9 +421,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		break;
 	case WM_LBUTTONUP:
 		{
-			TCHAR str[255];
-			c_dect->getLR2StatusString(str);
-			OutputDebugString(wstring(str).append(L"\n").c_str());
 			break;
 		}
 	case ID_NOTIFY_CLICK:
@@ -628,15 +625,15 @@ void loadSettings() {
 	TCHAR _s[255];
 
 	GetPrivateProfileStringW(L"LR2TWIT", L"LR2_TITLE", L"LR2 beta3 version 100201", _s, 255, L".\\settings.ini");
-	OutputDebugString(_s);
 	lstrcpy(opt_lr2title, _s);
 	GetPrivateProfileStringW(L"LR2TWIT", L"LR2_AUTOTWIT", L"1", _s, 255, L".\\settings.ini");
 	opt1 = _wtoi(_s);
 	GetPrivateProfileStringW(L"LR2TWIT", L"TWIT_MESSAGE", L"<[TITLE] ([RANK]) [GUAGE] [RESULT]!![AUTO] [RATE]%([RANK]) - [EXS]/[EXMS] (PG[PG]/GR[GR]/GD[GD]/PR[PR]/BD[BD], [MC] Combo) #LR2", _s, 255, L".\\settings.ini");
 	lstrcpy(opt_message, _s);
-	OutputDebugString(_s);
 	GetPrivateProfileStringW(L"LR2TWIT", L"TWIT_ENCODING", L"CP949", _s, 255, L".\\settings.ini");
 	wcstombs(opt_encode, _s, 255);
+	GetPrivateProfileStringW(L"LR2TWIT", L"TWIT_DLLAUTOINJECTATSTARTUP", L"1", _s, 255, L".\\settings.ini");
+	lr2_injectstartup = (wcscmp(_s, L"1") == 0);
 	GetPrivateProfileStringW(L"LR2TWIT", L"TWIT_CLEAR", L"1", _s, 255, L".\\settings.ini");
 	opt2 = _wtoi(_s);
 	GetPrivateProfileStringW(L"LR2TWIT", L"TWIT_HIGHSCORE", L"1", _s, 255, L".\\settings.ini");

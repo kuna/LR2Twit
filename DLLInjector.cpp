@@ -12,10 +12,24 @@ DWORD DLLInjector::GET_PID (char *win_Class, char *win_Title) {
 }
 
 BOOL DLLInjector::DLL_Injection(int PID, char* PATH) {
+	// path check
+	char npath[256];
+	strcpy(npath, PATH);
+	if (memcmp(npath, ".\\\\", 3) == 0) {
+		char str[256];
+		GetModuleFileNameA(0, str, 256);
+		char *p = strrchr(str, '\\');
+		*p = 0;
+		strcat(str, npath+2);
+		strcpy(npath, str);
+	}
+	OutputDebugStringA(npath);
+	OutputDebugStringA("\n");
+
 	HANDLE hProcess, hThread;
 	HMODULE hMod;
 	LPVOID Virtual_Address;
-	DWORD dwBufSize = strlen(PATH) + 1;
+	DWORD dwBufSize = strlen(npath) + 1;
 	LPTHREAD_START_ROUTINE Funcation_Address;
 
 	// PID로부터 핸들 값 얻어옴
@@ -25,7 +39,7 @@ BOOL DLLInjector::DLL_Injection(int PID, char* PATH) {
 	Virtual_Address = VirtualAllocEx(hProcess, NULL, dwBufSize, MEM_COMMIT, PAGE_READWRITE);
 
 	// 해당 메모리에 Injection 할 DLL 절대경로 넣어줌
-	WriteProcessMemory(hProcess, Virtual_Address, (LPCVOID)PATH, dwBufSize, NULL);
+	WriteProcessMemory(hProcess, Virtual_Address, (LPCVOID)npath, dwBufSize, NULL);
 	hMod = GetModuleHandleA("kernel32.dll");
 	Funcation_Address = (LPTHREAD_START_ROUTINE)GetProcAddress(hMod, "LoadLibraryA");
 
@@ -49,7 +63,7 @@ BOOL DLLInjector::Inject(char *win_Class, char *win_Title, char *dll_Path) {
 		return FALSE;
 	}
 
-	DLL_Injection(PID, "C:\\Users\\kuna\\\Documents\\Visual Studio 2010\\Projects\\LR2DLL\\Release\\LR2DLL.dll");
+	DLL_Injection(PID, dll_Path);
 
 	return TRUE;
 }
