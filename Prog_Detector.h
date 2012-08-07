@@ -10,7 +10,7 @@ using namespace std;
 // 0x00060000 - windows 7 64bit
 // 0x00000040 - windows xp
 
-#define LR_SCORE (0x00127294)
+#define LR_SCORE (0x00127294) // 001873AC - PARTNER
 #define LR_PG (0x001271C0)
 #define LR_GR (0x001271BC)
 #define LR_GD (0x001271B8)
@@ -18,7 +18,7 @@ using namespace std;
 #define LR_PR (0x001271B0)
 #define LR_EXS (0x00127280)
 #define LR_EXHS (0x0012F490)
-#define LR_NC (0x0006C27C) // note count
+#define LR_NC (0x00127278) // note count - 2D200
 #define LR_MC (0x001271C4) // max combo
 #define LR_MAINTITLE (0x000964D0)	// addr pointer
 #define LR_SUBTITLE (0x000964D4)	// addr pointer
@@ -32,6 +32,7 @@ using namespace std;
 #define LR_AUTOSCR (0x0008F870)
 #define LR_IRTOT (0x0012FB10)
 #define LR_IRNOW (0x0012FB54)
+#define LR_MODE (0x00096510)
 
 #define LR_ISMENU (0x00099C5C)
 #define LR_ISPLAYING (0x000986EC)
@@ -57,7 +58,6 @@ private:
 	void OSDetect();
 	Log *l;
 
-	void checkDiffLevel(TCHAR *title, TCHAR *diff, int totalNotCnt);
 	bool IsIIDXBMS(TCHAR *title);
 public:
 	Detector(Log *_l);
@@ -85,6 +85,7 @@ public:
 
 	bool isLR2Vaild();
 	void setRecordAlways();
+	void checkDiffLevel(TCHAR *title, TCHAR *diff, int totalNotCnt=0, int keymode=7);
 };
 
 /* formatString */

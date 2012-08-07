@@ -273,18 +273,6 @@ bool Detector::detectLR2() {
 	DWORD TID = GetWindowThreadProcessId(LR2hWnd, &LR2pid);
 	LR2h = OpenProcess( PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, LR2pid);
 
-	// get base addr
-	/*
-	app_hmoudle = LoadLibrary(L"LR2body.exe");
-	baseAddr = (size_t)GetModuleHandle(L"LR2body.exe");
-	//baseAddr = (size_t)GetModuleHandle(NULL);
-	if (!baseAddr) {
-		int gl = GetLastError();
-		return false;
-	}
-	FreeLibrary(app_hmoudle);
-*/
-
 	return true;
 }
 
@@ -334,6 +322,7 @@ bool Detector::getLR2Status() {
 	LR2stat[LR_AUTOSCR] = getMemValInt((LPVOID)(LR_AUTOSCR+_OFFSET));
 	LR2stat[LR_IRTOT] = getMemValInt((LPVOID)(LR_IRTOT+_OFFSET));
 	LR2stat[LR_IRNOW] = getMemValInt((LPVOID)(LR_IRNOW+_OFFSET));
+	LR2stat[LR_MODE] = getMemValInt((LPVOID)(LR_MODE+_OFFSET));
 	
 	LR2stat[LR_ISMENU] = getMemValInt((LPVOID)(LR_ISMENU+_OFFSET));
 	LR2stat[LR_ISPLAYING] = getMemValInt((LPVOID)(LR_ISPLAYING+_OFFSET));
@@ -368,14 +357,6 @@ bool Detector::getLR2Status() {
 	ReadProcessMemory(LR2h, (LPVOID)_addr, _str, sizeof(_str), &rl);
 	eucjp_to_cp949(string(_str), nstr);
 	lstrcpy(LR2BMSGenre, nstr.c_str());
-/*
-	OutputDebugStringA(string(_str).append("\n").c_str());
-	OutputDebugStringA(string(nstr).append("\n").c_str());
-	TCHAR wstr[255];
-	int iLen = ::MultiByteToWideChar(CP_ACP, 0, nstr.c_str(), -1, wstr, 0);
-	::MultiByteToWideChar(CP_ACP, 0, nstr.c_str(), -1, wstr, iLen);
-	lstrcpy(LR2BMSTitle, wstr);
-*/
 
 	ReadProcessMemory(LR2h, (LPVOID)(LR_GUAGENUM+_OFFSET), &LR2Guage, sizeof(LR2Guage), &rl);
 
@@ -460,7 +441,7 @@ void Detector::getLR2StatusString(TCHAR *str)
 		default:
 			lstrcpy(s2, L"//");
 	}
-	if (LR2stat[LR_MC] == LR2stat[LR_PG] + LR2stat[LR_GR] + LR2stat[LR_GD] )
+	if (LR2stat[LR_MC] == LR2stat[LR_NC] )
 		lstrcpy(s2, L"FULLCOMBO");
 
 	if (!isCleared()) {
@@ -496,7 +477,7 @@ void Detector::getLR2StatusString(TCHAR *str)
 	_itow(LR2stat[LR_DIFF], _s, 10);
 	wcscpy(s7, L"¡Ù");
 	wcscat(s7, _s);
-	checkDiffLevel(LR2BMSTitle, s7, LR2stat[LR_NC]);
+	checkDiffLevel(LR2BMSTitle, s7, LR2stat[LR_NC], LR2stat[LR_MODE]);
 
 	replace_str(str, L"[RANK]", s3);
 	replace_str(str, L"[GUAGE]", s2);
@@ -521,15 +502,13 @@ void Detector::getLR2StatusString(TCHAR *str)
 	replace_str(str, L"[SCORE]", LR2stat[LR_SCORE]);
 	replace_str(str, L"[IRTOT]", LR2stat[LR_IRTOT]);
 	replace_str(str, L"[IRNOW]", LR2stat[LR_IRNOW]);
+	replace_str(str, L"[KEY]", LR2stat[LR_MODE]);
 	if (LR2stat[LR_AUTOSCR])
 		replace_str(str, L"[AUTO]", L"(AUTO-SCR)");
 	else 
 		replace_str(str, L"[AUTO]", L"");
 	swprintf(_s, L"%.2f", rate);
 	replace_str(str, L"[RATE]", _s);
-	
-	OutputDebugString(str);
-	OutputDebugString(L"\n");
 
 	return;
 }
@@ -542,7 +521,7 @@ void Detector::replace_str(TCHAR *org, TCHAR *find, int n) {
 }
 
 void Detector::replace_str(TCHAR *org, TCHAR *find, TCHAR *n) {
-	TCHAR *sr, *org_pt, result[255];//*result, *sr;
+	TCHAR *sr, *org_pt, result[255];
 	size_t i, count = 0;
 	size_t oldlen = wcslen(find); if (oldlen < 1) return;
 	size_t newlen = wcslen(n);
@@ -555,9 +534,6 @@ void Detector::replace_str(TCHAR *org, TCHAR *find, TCHAR *n) {
 		}
 	} else i = wcslen(org);
 
-	//result = (TCHAR *) malloc((i + 1 + count * (newlen - oldlen))*2);
-	//if (result == NULL) return;
-
 	sr = result;
 	while (*org) {
 		if (memcmp(org, find, oldlen*2) == 0) {
@@ -565,27 +541,24 @@ void Detector::replace_str(TCHAR *org, TCHAR *find, TCHAR *n) {
 			sr += newlen;
 			org += oldlen;
 		} else {
-			//*sr = *org;
-			//sr+=2;
-			//org+=2;
 			*sr++ = *org++;
 		}
 	}
 	*sr = L'\0';
 
 	lstrcpy(org_pt, result);
-
-
-	//free(result);
-	//return result;
 }
 
-void Detector::checkDiffLevel(TCHAR *title, TCHAR *diff, int totalNoteCnt = 0)
+void Detector::checkDiffLevel(TCHAR *title, TCHAR *diff, int totalNoteCnt, int keymode)
 {
 	FILE *fp = fopen("level.txt", "rb");
 	if (!fp) return;
 	fseek(fp, 2, SEEK_SET);	// important
 
+	TCHAR preDiff[256];
+	lstrcpy(preDiff, L"");
+
+	int nkeymode = 7;
 	TCHAR buf[255];
 	TCHAR ndiff[10];
 	while (!feof(fp)) {
@@ -595,29 +568,36 @@ void Detector::checkDiffLevel(TCHAR *title, TCHAR *diff, int totalNoteCnt = 0)
 			buf[l-2] = L'\0';
 		if (wcslen(buf)==0)
 			continue;
+		if (memcmp(buf,L"pre",6) == 0 && keymode == nkeymode)
+			wcscpy(preDiff, buf+4);
 		if (memcmp(buf,L"//",4) == 0)
 			continue;
 		if (memcmp(buf,L"lvl",6) == 0) {
 			wcscpy(ndiff, buf+4);
+		} else if (memcmp(buf, L"key", 6) == 0) {
+			nkeymode = _wtoi(buf+4);
 		} else if (memcmp(buf,L"<n>",6) == 0) {
 			// custom option - note
 			TCHAR notecnt[10];
 			fgetws(notecnt, sizeof(notecnt), fp);
 			int nc = _wtoi(notecnt);
 
-			if (match(buf+4, title) && totalNoteCnt == nc) {
+			if (match(buf+4, title) && totalNoteCnt == nc && nkeymode == keymode) {
 				wcscpy(diff, ndiff);
 				wcscpy(title, buf+4);
+				break;
 			}
-			return;
-		} else if (match(buf, title)) {
+		} else if (match(buf, title) && nkeymode == keymode) {
 			wcscpy(diff, ndiff);
 			wcscpy(title, buf);
-			return;
+			break;
 		}
 	}
 
 	fclose(fp);
+	
+	lstrcat(preDiff, diff);
+	lstrcpy(diff, preDiff);
 }
 
 bool Detector::IsIIDXBMS(TCHAR *title)
@@ -665,11 +645,15 @@ BOOL match(TCHAR *fname, TCHAR *filter) {
 			}
 		} else {
 			if (fname[i]!=filter[j]) return FALSE;
+			while (fname[i+1] == L' ')
+				i++;
+			while (filter[j+1] == L' ')
+				j++;
 			j++;
 		}
 	}
 
-	if (j != wcslen(fname)) return FALSE;
+	//if (j != wcslen(fname)) return FALSE;
 
 	return TRUE;
 }

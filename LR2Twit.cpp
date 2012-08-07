@@ -65,6 +65,11 @@ LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
 				g_DLL.Inject(NULL, "LR2 beta3 version 100201", ".\\\\LR2DLL.dll");
 				setMessage("DLL Re-Injected.");
 			}
+			if (((EVENTMSG*)lParam)->message == 'E') {
+				// Eject
+				g_DLL.Eject();
+				setMessage("DLL Ejected.");
+			}
 		}
 	}
 
@@ -326,12 +331,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_PAINT:
 		{
 			hdc = BeginPaint(hWnd, &ps);
-
-			swprintf(s, L"SCORE:%d", c_dect->LR2stat[LR_SCORE]);
+			
+			// debug code
+			swprintf(s, L"%d - %d/%d/%d/%d/%d", c_dect->LR2stat[LR_SCORE],
+			c_dect->LR2stat[LR_PG], 
+			c_dect->LR2stat[LR_GR], 
+			c_dect->LR2stat[LR_GD], 
+			c_dect->LR2stat[LR_PR], 
+			c_dect->LR2stat[LR_BD] );
 			SetRect(&rt, 10, 300, 200, 320);
 			DrawText(hdc, s, lstrlen(s), &rt, DT_LEFT);
 			
-			swprintf(s, L"%s", c_dect->LR2BMSTitle);
+			swprintf(s, L"\"%s\"", c_dect->LR2BMSTitle);
 			SetRect(&rt, 10, 320, 200, 340);
 			DrawText(hdc, s, lstrlen(s), &rt, DT_LEFT);
 			
@@ -344,6 +355,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				SetRect(&rt, 10, 360, 200, 380);
 				DrawText(hdc, s, lstrlen(s), &rt, DT_LEFT);
 			}
+			
+			TCHAR s1[256], s2[256], b[10];
+			lstrcpy(s1, c_dect->LR2BMSTitle);
+			_itow(c_dect->LR2stat[LR_DIFF], b, 10);
+			wcscpy(s2, L"¡Ù");
+			wcscat(s2, b);
+			c_dect->checkDiffLevel(s1, s2, c_dect->LR2stat[LR_NC], c_dect->LR2stat[LR_MODE]);
+			SetRect(&rt, 10, 380, 200, 400);
+			DrawText(hdc, s2, lstrlen(s2), &rt, DT_LEFT);
 
 			EndPaint(hWnd, &ps);
 			break;
@@ -372,7 +392,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				if (lr2_injectstartup) g_DLL.Inject(NULL, "LR2 beta3 version 100201", ".\\\\LR2DLL.dll");
 				b_detected = true;
 
-				alarmTray( m_Lang.GetLanguageW(L"HOOK", L"Tray").c_str() );
+				alarmTray( m_Lang.GetLanguageW(L"HOOK", L"Tray")
+					.append( m_Lang.GetLanguageW(L"HOOK", (lr2_injectstartup)?(L"Tray_InjectStartup"):(L"Tray_NoInjectStartup") ) ).c_str() );
 				setMessage( m_Lang.GetLanguageA("HOOK", "Hook").c_str() );
 			}
 			changeTray(true);
