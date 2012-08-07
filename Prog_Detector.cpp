@@ -622,8 +622,8 @@ bool Detector::IsIIDXBMS(TCHAR *title)
 
 BOOL match(TCHAR *fname, TCHAR *filter) {
 	int l = wcslen(filter);
-	int j=0;
-	for (int i=0; i<l; i++) {
+	int i,j=0;
+	for (i=0; i<l; i++) {
 		if (filter[i] == L'?') {
 			j++;
 			continue;
@@ -653,9 +653,8 @@ BOOL match(TCHAR *fname, TCHAR *filter) {
 		}
 	}
 
-	//if (j != wcslen(fname)) return FALSE;
-
-	return TRUE;
+	if (fname[i] == 0 && filter[j] == 0) return TRUE;
+	else return FALSE;
 }
 
 bool Detector::isLR2Vaild() {
