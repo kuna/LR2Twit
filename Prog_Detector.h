@@ -35,8 +35,8 @@ using namespace std;
 #define LR_MODE (0x00096510)
 
 #define LR_ISMENU (0x00099C5C)
-#define LR_ISPLAYING (0x000986EC)
-#define LR_ISRESULT (0x00098704)
+#define LR_ISPLAYING (0x000986EC)	// DF38, D43C, D434
+#define LR_ISRESULT (0x0000A19B8)	// 001019B8, 001019F4, F8704
 
 class Detector {
 private:

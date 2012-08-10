@@ -36,9 +36,6 @@
     <ClCompile Include="Twitpic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="conv.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="lang.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -69,9 +66,6 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Twitpic.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="conv.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="lang.h">

@@ -1,6 +1,5 @@
 #include "stdafx.h"
 #include "TwitProc.h"
-#include "conv.h"
 
 /*
 TwitProc::TwitProc() {
@@ -150,18 +149,15 @@ bool TwitProc::getToken(string id, string pass) {
 
 bool TwitProc::sendTwit(string msg)
 {
-	string conv_msg;
-	cp949_to_utf8(msg, conv_msg);
-
-	if (twitterObj.statusUpdate( conv_msg )) {
+	if (twitterObj.statusUpdate( msg )) {
 		string replyMsg;
 		twitterObj.getLastWebResponse( replyMsg );
-		l->writeLogLine( L"[Twit]", replyMsg.c_str() );
+		l->writeLogLine( L"Twit", replyMsg.c_str() );
 		return true;
 	} else {
 		string replyMsg;
 		twitterObj.getLastCurlError( replyMsg );
-		l->writeLogLine( L"[Twit Error]", replyMsg.c_str() );
+		l->writeLogLine( L"Twit Error", replyMsg.c_str() );
 		return false;
 	}
 	// wprintf(L"\r\nUpdate Result:\r\n%s\r\n", submitResult.c_str());

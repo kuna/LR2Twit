@@ -168,7 +168,7 @@ bool eucjp_to_cp949(const string& in, wstring& out)
 	size_t inLen, outLen;
 	pszOut=NULL;
 	
-	cd = iconv_open("UTF-16LE","SHIFT_JIS");
+	cd = iconv_open("UTF-16LE",opt_encode);
 	if(cd == (iconv_t)(-1))
 	{
 		//OutputDebugString(L"error!\n");
@@ -196,44 +196,6 @@ clean:
 	if(pszOut) free(pszOut);
 	return ret;
 }
-/*
-bool eucjp_to_cp949(const string& in, string& out)
-{
-	iconv_t cd;
-	bool ret = false;
-	const char* pszIn;
-	char* pszOut, *pos;
-	size_t inLen, outLen;
-	pszOut=NULL;
-	
-	cd = iconv_open("EUC-KR","CP932");
-	if(cd == (iconv_t)(-1))
-	{
-		OutputDebugString(L"error!\n");
-		return false; 
-	}
-	
-	inLen = in.length();
-	pszIn = in.c_str();
-	
-	outLen = (inLen+1) * 2;
-	pos = pszOut = (char*)calloc(outLen, sizeof(char));
-	if(!pszOut) {
-		OutputDebugString(L"error - no size\n");
-		goto clean;
-	}
-	
-	if(iconv(cd, &pszIn, &inLen, &pos, &outLen)==-1) {
-		OutputDebugString(L"error - convert fail\n");
-		goto clean;
-	}
-	out = pszOut;
-	ret = true;
-clean:
-	iconv_close(cd);
-	if(pszOut) free(pszOut);
-	return ret;
-}*/
 
 Detector::Detector(Log *_l) {
 	lstrcpy(LR2WinTitle, opt_lr2title);

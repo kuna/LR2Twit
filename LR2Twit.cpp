@@ -4,7 +4,6 @@
 #include "stdafx.h"
 #include "LR2Twit.h"
 #include "DLLInjector.h"
-#include "conv.h"
 #include "lang.h"
 
 #include <atlcore.h> /*string.wstring*/
@@ -502,12 +501,12 @@ void __cdecl doTwit(void *) {
 	TCHAR str[255];
 	c_dect->getLR2StatusString(str);
 	str[140] = L'\0';	// max 140 char
-	m_log.writeLogLine(L"[Twit]", str);
+	m_log.writeLogLine(L"Twit", str);
 
 	char* pTemp = NULL;
-	int iLen = ::WideCharToMultiByte(CP_ACP, 0, str, -1, pTemp, 0, NULL, NULL);
+	int iLen = ::WideCharToMultiByte(CP_UTF8, 0, str, -1, pTemp, 0, NULL, NULL);
 	pTemp = new char[iLen+1];
-	::WideCharToMultiByte(CP_ACP, 0, str, -1, pTemp, iLen, NULL, NULL);
+	::WideCharToMultiByte(CP_UTF8, 0, str, -1, pTemp, iLen, NULL, NULL);
 
 	string astr = string(pTemp);
 	delete [] pTemp;
@@ -538,24 +537,17 @@ void __cdecl doTwitwithPic(PVOID delaymilltime) {
 	m_log.writeLogLine(L"TwitPic", str);
 
 	char* pTemp = NULL;
-	int iLen = ::WideCharToMultiByte(CP_ACP, 0, str, -1, pTemp, 0, NULL, NULL);
+	int iLen = ::WideCharToMultiByte(CP_UTF8, 0, str, -1, pTemp, 0, NULL, NULL);
 	pTemp = new char[iLen+1];
-	::WideCharToMultiByte(CP_ACP, 0, str, -1, pTemp, iLen, NULL, NULL);
+	::WideCharToMultiByte(CP_UTF8, 0, str, -1, pTemp, iLen, NULL, NULL);
 	
 	Twitpic m_tpic;
 	m_tpic.set_account(c_twit->customerKey, c_twit->customerSecret,
 		c_twit->accessToken, c_twit->accessTokenSecret);
 	if (m_tpic.CaptureScreen())	// wait till finish
-	{
-		// status convert
-		string conv_msg;
-		cp949_to_utf8(string(pTemp), conv_msg);
-		char tmp[256];
-		strcpy(tmp, conv_msg.c_str());
-		
-		// remove after update
+	{		// remove after update
 		setMessage( m_Lang.GetLanguageA("HOOK", "PicTwitWait").c_str() );
-		string res = m_tpic.upload_pic( m_tpic.LR2PicPath, tmp );
+		string res = m_tpic.upload_pic( m_tpic.LR2PicPath, pTemp );
 		remove(m_tpic.LR2PicPath);
 		
 		setMessage( m_Lang.GetLanguageA("HOOK", "PicTwit").c_str() );
