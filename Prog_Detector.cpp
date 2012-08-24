@@ -403,7 +403,7 @@ void Detector::getLR2StatusString(TCHAR *str)
 		default:
 			lstrcpy(s2, L"//");
 	}
-	if (LR2stat[LR_MC] == LR2stat[LR_NC] )
+	if (LR2stat[LR_MC] == LR2stat[LR_NC] )	/* check fullcombo status */
 		lstrcpy(s2, L"FULLCOMBO");
 
 	if (!isCleared()) {

@@ -438,7 +438,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 					doTwitwithPic(&val);
 					//_beginthread(doTwitwithPic, 0, &val);
 				} else {
-					_beginthread(doTwit, 0, 0);
+					doTwit(0);
 				}
 
 				twit_Twitted = true;
