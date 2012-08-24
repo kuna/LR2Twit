@@ -38,6 +38,24 @@ DLLInjector g_DLL;
 HHOOK hHook;
 LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
 	if (nCode == HC_ACTION) {
+		if (GetAsyncKeyState (VK_SHIFT) && !c_dect->isPlaying()) {
+			// show level
+			c_dect->getLR2Status();
+
+			TCHAR s1[256], s2[256], b[10];
+			lstrcpy(s1, c_dect->LR2BMSTitle);
+			_itow(c_dect->LR2stat[LR_DIFF], b, 10);
+			wcscpy(s2, L"¡Ù");
+			wcscat(s2, b);
+			c_dect->checkDiffLevel(s1, s2, c_dect->LR2stat[LR_NC], c_dect->LR2stat[LR_MODE]);
+
+			char msg[25];
+			int iLen = ::WideCharToMultiByte(CP_ACP, 0, s2, -1, msg, 0, NULL, NULL);
+			::WideCharToMultiByte(CP_ACP, 0, s2, -1, msg, iLen, NULL, NULL);
+
+			setMessage(msg);
+		}
+
 		int bControlKeyDown = GetAsyncKeyState (VK_CONTROL);
 		if (bControlKeyDown && wParam == WM_KEYUP && opt4 && c_dect->isLR2Vaild()) {
 			if (((EVENTMSG*)lParam)->message == 'T' && c_dect->isResultScreen()) {
@@ -61,6 +79,8 @@ LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
 			}
 			if (((EVENTMSG*)lParam)->message == 'A') {
 				// REInspect
+				if (g_DLL.isDLLInjected(NULL, "LR2 beta3 version 100201", L"LR2DLL.dll"))
+					g_DLL.Eject();
 				g_DLL.Inject(NULL, "LR2 beta3 version 100201", ".\\\\LR2DLL.dll");
 				setMessage("DLL Re-Injected.");
 			}

@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "DLLInjector.h"
+#include "tlhelp32.h"
 
 typedef BOOL (__cdecl *fn_CaptureScreen)();
 
@@ -9,6 +10,29 @@ DWORD DLLInjector::GET_PID (char *win_Class, char *win_Title) {
 	 DWORD pID;
 	 GetWindowThreadProcessId(hWnd, &pID);
 	 return pID;
+}
+
+BOOL DLLInjector::isDLLInjected(char *win_Class, char *win_Title, TCHAR *dll_Name)
+{
+	if (!PID) {
+		PID = GET_PID(win_Class, win_Title);
+		if (!PID) return FALSE;
+	}
+
+	BOOL bMore = 0, bFound = 0;
+	HANDLE hSnapshot;
+	MODULEENTRY32 me = { sizeof(me) };
+
+	hSnapshot = CreateToolhelp32Snapshot( TH32CS_SNAPALL, PID );
+	for (bMore = Module32First(hSnapshot, &me); bMore; bMore = Module32Next(hSnapshot, &me)) {
+		if ( !wcscmp(me.szModule, dll_Name)) {
+			bFound = true;
+			break;
+		}
+	}
+
+	CloseHandle(hSnapshot);
+	return bFound;
 }
 
 BOOL DLLInjector::DLL_Injection(int PID, char* PATH) {
@@ -55,10 +79,9 @@ BOOL DLLInjector::DLL_Injection(int PID, char* PATH) {
 }
 
 BOOL DLLInjector::Inject(char *win_Class, char *win_Title, char *dll_Path) {
-	PID = GET_PID(win_Class, win_Title);
 	if (!PID) {
-		//printf("Cannot find process\n");
-		return FALSE;
+		PID = GET_PID(win_Class, win_Title);
+		if (!PID) return FALSE;
 	}
 
 	DLL_Injection(PID, dll_Path);
