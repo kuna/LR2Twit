@@ -18,6 +18,7 @@
 #define ID_CHK3	1007
 #define ID_CHK4	1008
 #define ID_CHK5	1009
+#define ID_CHK6 1010
 
 
 Detector *c_dect;
@@ -66,6 +67,7 @@ HWND c2_hWnd;
 HWND c3_hWnd;
 HWND c4_hWnd;
 HWND c5_hWnd;
+HWND c6_hWnd;
 
 HWND e1_hWnd;	// id
 HWND e2_hWnd;	// pass

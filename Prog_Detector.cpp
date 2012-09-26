@@ -472,6 +472,14 @@ void Detector::getLR2StatusString(TCHAR *str)
 	swprintf(_s, L"%.2f", rate);
 	replace_str(str, L"[RATE]", _s);
 
+	// check IIDX 本家 BMS
+	if (opt6 && !IsIIDXBMS(LR2BMSTitle)) {
+		swprintf(str, L"%s #LR2", str);
+		l->writeLogLine(L"IIDXBMS", L"복돌(?) BMS 입니다");
+	} else {
+		l->writeLogLine(L"IIDXBMS", L"일반 BMS입니다");
+	}
+
 	return;
 }
 
@@ -564,7 +572,7 @@ void Detector::checkDiffLevel(TCHAR *title, TCHAR *diff, int totalNoteCnt, int k
 
 bool Detector::IsIIDXBMS(TCHAR *title)
 {
-	FILE *fp = fopen("level.txt", "r");
+	FILE *fp = fopen("iidx.txt", "rb");
 	if (!fp) return false;
 	fseek(fp, 2, SEEK_SET);
 
@@ -572,9 +580,14 @@ bool Detector::IsIIDXBMS(TCHAR *title)
 	TCHAR buf[255];
 	while (!feof(fp)) {
 		fgetws(buf, sizeof(buf), fp);
+		int l = wcslen(buf);
+		if (buf[l-1] == L'\n')
+			buf[l-2] = L'\0';
+		if (wcslen(buf)==0)
+			continue;
 		if (memcmp(buf,L"//",4) == 0)
 			continue;
-		if (wcscmp(title, buf)==0)
+		if (match(buf, title))
 			return true;
 	}
 
@@ -583,7 +596,9 @@ bool Detector::IsIIDXBMS(TCHAR *title)
 
 
 BOOL match(TCHAR *fname, TCHAR *filter) {
+	// auto trim for ...
 	int l = wcslen(filter);
+	if (filter[l-2] == 13) filter[l-2]=0, l-=2;
 	int i,j=0;
 	for (i=0; i<l; i++) {
 		if (filter[i] == L'?') {

@@ -191,7 +191,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    hInst = hInstance; // Store instance handle in our global variable
 
    hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, CW_USEDEFAULT, 240, 270, NULL, NULL, hInstance, NULL);
+      CW_USEDEFAULT, CW_USEDEFAULT, 240, 290, NULL, NULL, hInstance, NULL);
 	m_hWnd = hWnd;
 
    if (!hWnd)
@@ -263,20 +263,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			10, 70, 200, 20, hWnd, (HMENU)ID_CHK4, hInst, NULL);
 		c5_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg5").c_str(), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
 			10, 90, 200, 20, hWnd, (HMENU)ID_CHK5, hInst, NULL);
+		c6_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg5_1").c_str(), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+			10, 110, 200, 20, hWnd, (HMENU)ID_CHK6, hInst, NULL);
 
 		e1_hWnd = CreateWindow(L"edit", L"", WS_CHILD | WS_VISIBLE | BS_TEXT | WS_BORDER,
-			10, 120, 200, 20, hWnd, (HMENU)0, hInst, NULL);
-		e2_hWnd = CreateWindow(L"edit", L"", WS_CHILD | WS_VISIBLE | BS_TEXT | WS_BORDER | ES_PASSWORD,
 			10, 140, 200, 20, hWnd, (HMENU)0, hInst, NULL);
+		e2_hWnd = CreateWindow(L"edit", L"", WS_CHILD | WS_VISIBLE | BS_TEXT | WS_BORDER | ES_PASSWORD,
+			10, 160, 200, 20, hWnd, (HMENU)0, hInst, NULL);
 		b3_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg6").c_str(), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-			10, 160, 200, 20, hWnd, (HMENU)ID_TWEETAUTH, hInst, NULL);
+			10, 180, 200, 20, hWnd, (HMENU)ID_TWEETAUTH, hInst, NULL);
 
 		b1_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg7").c_str(), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-			10, 190, 60, 20, hWnd, (HMENU)ID_OK, hInst, NULL);
+			10, 210, 60, 20, hWnd, (HMENU)ID_OK, hInst, NULL);
 		b2_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg8").c_str(), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-			80, 190, 60, 20, hWnd, (HMENU)ID_CANCEL, hInst, NULL);
+			80, 210, 60, 20, hWnd, (HMENU)ID_CANCEL, hInst, NULL);
 		b4_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg9").c_str(), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-			160, 190, 40, 20, hWnd, (HMENU)ID_TWIT, hInst, NULL);
+			160, 210, 40, 20, hWnd, (HMENU)ID_TWIT, hInst, NULL);
 
 		break;
 	case WM_COMMAND:
@@ -317,7 +319,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				}
 				TCHAR str[255];
 				c_dect->getLR2StatusString(str);
-				int r = MessageBox(m_hWnd, wstring(str).append(  m_Lang.GetLanguageW(L"DIALOG", L"TiwtConfirm") ).c_str(), L"", MB_YESNO);
+				int r = MessageBox(m_hWnd, wstring(str).append(  m_Lang.GetLanguageW(L"DIALOG", L"TwitConfirm") ).c_str(), L"", MB_YESNO);
 				if (r == IDYES) {
 					if (twit_pic)
 						//_beginthread(doTwitwithPic, 0, 0);
@@ -408,7 +410,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		} else {
 			if (!b_detected) {
 				playAlarm();
-				if (lr2_injectstartup) g_DLL.Inject(NULL, "LR2 beta3 version 100201", ".\\\\LR2DLL.dll");
+				if (lr2_injectstartup && !g_DLL.isDLLInjected(NULL, "LR2 beta3 version 100201", L"LR2DLL.dll"))
+					g_DLL.Inject(NULL, "LR2 beta3 version 100201", ".\\\\LR2DLL.dll");
 				b_detected = true;
 
 				alarmTray( m_Lang.GetLanguageW(L"HOOK", L"Tray")
@@ -642,6 +645,7 @@ void saveSettings() {
 	opt3 = (SendMessage(c3_hWnd,BM_GETCHECK,0,0) == BST_CHECKED);
 	opt4 = (SendMessage(c4_hWnd,BM_GETCHECK,0,0) == BST_CHECKED);
 	opt5 = (SendMessage(c5_hWnd,BM_GETCHECK,0,0) == BST_CHECKED);
+	opt6 = (SendMessage(c6_hWnd,BM_GETCHECK,0,0) == BST_CHECKED);
 
 	twit_auto = opt1;
 	twit_clear = opt2;
@@ -660,6 +664,8 @@ void saveSettings() {
 	WritePrivateProfileStringW(L"LR2TWIT", L"TWIT_SHORTCUTKEY", _s, L".\\settings.ini" );
 	_itow(opt5, _s, 10);
 	WritePrivateProfileStringW(L"LR2TWIT", L"TWIT_WITHPIC", _s, L".\\settings.ini" );
+	_itow(opt6, _s, 10);
+	WritePrivateProfileStringW(L"LR2TWIT", L"TWIT_LR2TAG", _s, L".\\settings.ini" );
 }
 
 void loadSettings() {
@@ -669,9 +675,9 @@ void loadSettings() {
 	lstrcpy(opt_lr2title, _s);
 	GetPrivateProfileStringW(L"LR2TWIT", L"LR2_AUTOTWIT", L"1", _s, 255, L".\\settings.ini");
 	opt1 = _wtoi(_s);
-	GetPrivateProfileStringW(L"LR2TWIT", L"TWIT_MESSAGE", L"<[TITLE] ([DIFF]) [GUAGE] [RESULT]!![AUTO] [RATE]%([RANK]) - [EXS]/[EXMS] (PG[PG]/GR[GR]/GD[GD]/PR[PR]/BD[BD], [MC] Combo) #LR2", _s, 255, L".\\settings.ini");
+	GetPrivateProfileStringW(L"LR2TWIT", L"TWIT_MESSAGE", L"<[TITLE] ([DIFF]) [GUAGE] [RESULT]!![AUTO] [RATE]%([RANK]) - [EXS]/[EXMS] (PG[PG]/GR[GR]/GD[GD]/PR[PR]/BD[BD], [MC]/[NC] Combo)", _s, 255, L".\\settings.ini");
 	lstrcpy(opt_message, _s);
-	GetPrivateProfileStringW(L"LR2TWIT", L"TWIT_ENCODING", L"CP949", _s, 255, L".\\settings.ini");
+	GetPrivateProfileStringW(L"LR2TWIT", L"TWIT_ENCODING", L"SHIFT_JIS", _s, 255, L".\\settings.ini");
 	wcstombs(opt_encode, _s, 255);
 	GetPrivateProfileStringW(L"LR2TWIT", L"TWIT_DLLAUTOINJECTATSTARTUP", L"1", _s, 255, L".\\settings.ini");
 	lr2_injectstartup = (wcscmp(_s, L"1") == 0);
@@ -683,6 +689,8 @@ void loadSettings() {
 	opt4 = _wtoi(_s);
 	GetPrivateProfileStringW(L"LR2TWIT", L"TWIT_WITHPIC", L"1", _s, 255, L".\\settings.ini");
 	opt5 = _wtoi(_s);
+	GetPrivateProfileStringW(L"LR2TWIT", L"TWIT_LR2TAG", L"1", _s, 255, L".\\settings.ini");
+	opt6 = _wtoi(_s);
 
 	twit_auto = opt1;
 	twit_clear = opt2;
@@ -696,6 +704,7 @@ void setSettings() {
 	SendMessage(c3_hWnd,BM_SETCHECK,opt3?BST_CHECKED:BST_UNCHECKED,0);
 	SendMessage(c4_hWnd,BM_SETCHECK,opt4?BST_CHECKED:BST_UNCHECKED,0);
 	SendMessage(c5_hWnd,BM_SETCHECK,opt5?BST_CHECKED:BST_UNCHECKED,0);
+	SendMessage(c6_hWnd,BM_SETCHECK,opt6?BST_CHECKED:BST_UNCHECKED,0);
 }
 
 bool checkMutex()

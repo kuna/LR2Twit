@@ -79,10 +79,8 @@ BOOL DLLInjector::DLL_Injection(int PID, char* PATH) {
 }
 
 BOOL DLLInjector::Inject(char *win_Class, char *win_Title, char *dll_Path) {
-	if (!PID) {
-		PID = GET_PID(win_Class, win_Title);
-		if (!PID) return FALSE;
-	}
+	PID = GET_PID(win_Class, win_Title);
+	if (!PID) return FALSE;
 
 	DLL_Injection(PID, dll_Path);
 
@@ -113,6 +111,7 @@ BOOL DLLInjector::Eject() {
 	CloseHandle(hProcess);
 
 	g_hModule = 0;
+	PID = 0;	// preparing for Re-inject
 
 	return TRUE;
 }
