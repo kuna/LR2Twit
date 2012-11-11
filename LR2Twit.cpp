@@ -59,10 +59,18 @@ LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
 		int bControlKeyDown = GetAsyncKeyState (VK_CONTROL);
 		if (bControlKeyDown && wParam == WM_KEYUP && opt4 && c_dect->isLR2Vaild()) {
 			if (((EVENTMSG*)lParam)->message == 'T' && c_dect->isResultScreen()) {
-				doTwit(0);
+				if (c_dect->isAutoPlaying()) {
+					setMessage( m_Lang.GetLanguageA("DIALOG", "NoAutoPlay").c_str() );
+				} else {
+					doTwit(0);
+				}
 			}
 			if (((EVENTMSG*)lParam)->message == 'R' && c_dect->isResultScreen()) {
-				doTwitwithPic(0);
+				if (c_dect->isAutoPlaying()) {
+					setMessage( m_Lang.GetLanguageA("DIALOG", "NoAutoPlay").c_str() );
+				} else {
+					doTwitwithPic(0);
+				}
 			}
 			if (((EVENTMSG*)lParam)->message == 'Y' && c_dect->isPlaying()) {
 				twit_cancel = !twit_cancel;
@@ -675,6 +683,8 @@ void loadSettings() {
 	lstrcpy(opt_lr2title, _s);
 	GetPrivateProfileStringW(L"LR2TWIT", L"LR2_AUTOTWIT", L"1", _s, 255, L".\\settings.ini");
 	opt1 = _wtoi(_s);
+	GetPrivateProfileStringW(L"LR2TWIT", L"LR2_REMOVEAUTOLIMIT", L"0", _s, 255, L".\\settings.ini");
+	opt7 = _wtoi(_s);
 	GetPrivateProfileStringW(L"LR2TWIT", L"TWIT_MESSAGE", L"<[TITLE] ([DIFF]) [GUAGE] [RESULT]!![AUTO] [RATE]%([RANK]) - [EXS]/[EXMS] (PG[PG]/GR[GR]/GD[GD]/PR[PR]/BD[BD], [MC]/[NC] Combo)", _s, 255, L".\\settings.ini");
 	lstrcpy(opt_message, _s);
 	GetPrivateProfileStringW(L"LR2TWIT", L"TWIT_ENCODING", L"SHIFT_JIS", _s, 255, L".\\settings.ini");

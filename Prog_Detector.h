@@ -28,7 +28,7 @@ using namespace std;
 #define LR_DIFF (0x00096518)
 #define LR_GUAGE (0x0008F840)
 #define LR_GUAGENUM (0x00127200)
-#define LR_AUTO (0x00096668)
+#define LR_AUTO (0x00096668)	// Byte (XP) - 96582, 966A8 (+Replay)
 #define LR_AUTOSCR (0x0008F870)
 #define LR_IRTOT (0x0012FB10)
 #define LR_IRNOW (0x0012FB54)
@@ -36,7 +36,7 @@ using namespace std;
 
 #define LR_ISMENU (0x00099C5C)
 #define LR_ISPLAYING (0x000986EC)	// DF38, D43C, D434
-#define LR_ISRESULT (0x000098704)	// 001019B8, 001019F4(A19F4), F8704
+#define LR_ISRESULT (0x0000A19F4)	// 001019B8, 001019F4(A19F4), F8704
 
 class Detector {
 private:

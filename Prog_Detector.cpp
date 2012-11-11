@@ -280,7 +280,6 @@ bool Detector::getLR2Status() {
 	LR2stat[LR_NC] = getMemValInt((LPVOID)(LR_NC+_OFFSET));
 	LR2stat[LR_DIFF] = getMemValInt((LPVOID)(LR_DIFF+_OFFSET));
 	LR2stat[LR_GUAGE] = getMemValInt((LPVOID)(LR_GUAGE+_OFFSET));
-	LR2stat[LR_AUTO] = getMemValInt((LPVOID)(LR_AUTO+_OFFSET));
 	LR2stat[LR_AUTOSCR] = getMemValInt((LPVOID)(LR_AUTOSCR+_OFFSET));
 	LR2stat[LR_IRTOT] = getMemValInt((LPVOID)(LR_IRTOT+_OFFSET));
 	LR2stat[LR_IRNOW] = getMemValInt((LPVOID)(LR_IRNOW+_OFFSET));
@@ -289,6 +288,9 @@ bool Detector::getLR2Status() {
 	LR2stat[LR_ISMENU] = getMemValInt((LPVOID)(LR_ISMENU+_OFFSET));
 	LR2stat[LR_ISPLAYING] = getMemValInt((LPVOID)(LR_ISPLAYING+_OFFSET));
 	LR2stat[LR_ISRESULT] = getMemValInt((LPVOID)(LR_ISRESULT+_OFFSET));
+	
+	// byte
+	LR2stat[LR_AUTO] = getMemValInt((LPVOID)(LR_AUTO+_OFFSET));
 
 	int _i, _addr;
 	SIZE_T rl;
@@ -333,6 +335,7 @@ bool Detector::isHighScore() {
 bool Detector::isAutoPlaying() {
 	if (!LR2hWnd) return false;
 	if (!IsWindow(LR2hWnd)) return false;
+	if (opt7) return true;	// WARNING
 	return (LR2stat[LR_AUTO]);
 }
 
@@ -351,6 +354,7 @@ bool Detector::isCleared() {
 bool Detector::isResultScreen() {
 	if (!LR2hWnd) return false;
 	if (!IsWindow(LR2hWnd)) return false;
+	if (opt7) return true;	// WARNING
 	return (LR2stat[LR_ISRESULT] == 1);
 }
 

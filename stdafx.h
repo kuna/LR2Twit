@@ -41,6 +41,7 @@ extern int opt3; // high score
 extern int opt4; // twitshortcutkey
 extern int opt5; // twit with pic
 extern int opt6; // enable automatic #LR2 tag (disable #LR2 Auto tag when IIDX)
+extern int opt7; // remove autoplay limit (WARNING)
 extern TCHAR opt_lr2title[255];
 extern char opt_encode[255];
 extern TCHAR opt_message[255];
