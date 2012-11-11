@@ -318,9 +318,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			ShowWindow(m_hWnd, SW_HIDE);
 			break;
 		case ID_TWIT:
-			if (!c_dect->isCleared() && twit_clear) {
-				MessageBox(m_hWnd, m_Lang.GetLanguageW(L"DIALOG", L"OnlyClearScreen").c_str(), L"", NULL);
-			} else {
+			{
+				if (!c_dect->isCleared() && twit_clear) {
+					MessageBox(m_hWnd, m_Lang.GetLanguageW(L"DIALOG", L"OnlyClearScreen").c_str(), L"", NULL);
+					break;
+				}
+				if (!c_dect->isResultScreen()) {
+					MessageBox(m_hWnd, m_Lang.GetLanguageW(L"DIALOG", L"OnlyResultScreen").c_str(), L"", NULL);
+					break;
+				}
 				if (c_dect->isAutoPlaying()) {
 					MessageBox(m_hWnd, m_Lang.GetLanguageW(L"DIALOG", L"NoAutoPlay").c_str(), L"", NULL);
 					break;
