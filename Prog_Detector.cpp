@@ -335,7 +335,7 @@ bool Detector::isHighScore() {
 bool Detector::isAutoPlaying() {
 	if (!LR2hWnd) return false;
 	if (!IsWindow(LR2hWnd)) return false;
-	if (opt7) return true;	// WARNING
+	if (opt7) return false;	// WARNING
 	return (LR2stat[LR_AUTO]);
 }
 
