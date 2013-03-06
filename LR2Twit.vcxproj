@@ -65,7 +65,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;MARKUP_STL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
@@ -87,24 +87,30 @@
   <ItemGroup>
     <ClCompile Include="DLLInjector.cpp" />
     <ClCompile Include="lang.cpp" />
+    <ClCompile Include="level.cpp" />
     <ClCompile Include="Log.cpp" />
     <ClCompile Include="LR2Twit.cpp" />
+    <ClCompile Include="Markup.cpp" />
     <ClCompile Include="Prog_Detector.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Tool.cpp" />
     <ClCompile Include="Twitpic.cpp" />
     <ClCompile Include="TwitProc.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DLLInjector.h" />
     <ClInclude Include="lang.h" />
+    <ClInclude Include="level.h" />
     <ClInclude Include="Log.h" />
     <ClInclude Include="LR2Twit.h" />
+    <ClInclude Include="Markup.h" />
     <ClInclude Include="Prog_Detector.h" />
     <ClInclude Include="Resource.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="Tool.h" />
     <ClInclude Include="twitcurl.h" />
     <ClInclude Include="Twitpic.h" />
     <ClInclude Include="TwitProc.h" />

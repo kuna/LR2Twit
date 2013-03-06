@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "Prog_Detector.h"
+#include "Tool.h"
 
 /*** OS Detector ***/
 #ifndef GETPROC
@@ -322,6 +323,11 @@ bool Detector::getLR2Status() {
 	eucjp_to_cp949(string(_str), nstr);
 	lstrcpy(LR2BMSGenre, nstr.c_str());
 
+	_addr = getMemValInt((LPVOID)(LR_HASH+_OFFSET));
+	ReadProcessMemory(LR2h, (LPVOID)_addr, _str, sizeof(_str), &rl);
+	eucjp_to_cp949(string(_str), nstr);
+	lstrcpy(LR2BMSHash, nstr.c_str());
+
 	ReadProcessMemory(LR2h, (LPVOID)(LR_GUAGENUM+_OFFSET), &LR2Guage, sizeof(LR2Guage), &rl);
 
 	return true;
@@ -439,11 +445,7 @@ void Detector::getLR2StatusString(TCHAR *str)
 	}
 
 	lstrcpy(str, LR2FormatStr);
-
-	_itow(LR2stat[LR_DIFF], _s, 10);
-	wcscpy(s7, L"☆");
-	wcscat(s7, _s);
-	checkDiffLevel(LR2BMSTitle, s7, LR2stat[LR_NC], LR2stat[LR_MODE]);
+	getLevel(s7);
 
 	replace_str(str, L"[RANK]", s3);
 	replace_str(str, L"[GUAGE]", s2);
@@ -479,9 +481,9 @@ void Detector::getLR2StatusString(TCHAR *str)
 	// check IIDX 本家 BMS
 	if (opt6 && !IsIIDXBMS(LR2BMSTitle)) {
 		swprintf(str, L"%s #LR2", str);
-		l->writeLogLine(L"IIDXBMS", L"복돌(?) BMS 입니다");
-	} else {
 		l->writeLogLine(L"IIDXBMS", L"일반 BMS입니다");
+	} else {
+		l->writeLogLine(L"IIDXBMS", L"복돌(?) BMS 입니다");
 	}
 
 	return;
@@ -523,10 +525,23 @@ void Detector::replace_str(TCHAR *org, TCHAR *find, TCHAR *n) {
 	lstrcpy(org_pt, result);
 }
 
-void Detector::checkDiffLevel(TCHAR *title, TCHAR *diff, int totalNoteCnt, int keymode)
+bool Detector::checkInsaneLevel(TCHAR *diff) {
+	int lv = Level.getInsaneLevel(LR2BMSHash);
+	if (lv >= 0) {
+		wsprintf(diff, L"★%d", lv);
+		return true;
+	} else {
+		return false;
+	}
+}
+
+bool Detector::checkDiffLevelFromFile(TCHAR *diff)
 {
+	int totalNoteCnt = LR2stat[LR_NC];
+	int keymode = LR2stat[LR_MODE];
+
 	FILE *fp = fopen("level.txt", "rb");
-	if (!fp) return;
+	if (!fp) return false;
 	fseek(fp, 2, SEEK_SET);	// important
 
 	TCHAR preDiff[256];
@@ -556,22 +571,53 @@ void Detector::checkDiffLevel(TCHAR *title, TCHAR *diff, int totalNoteCnt, int k
 			fgetws(notecnt, sizeof(notecnt), fp);
 			int nc = _wtoi(notecnt);
 
-			if (match(buf+4, title) && totalNoteCnt == nc && nkeymode == keymode) {
+			if (Tool::match(buf+4, LR2BMSTitle) && totalNoteCnt == nc && nkeymode == keymode) {
 				wcscpy(diff, ndiff);
-				wcscpy(title, buf+4);
-				break;
+				return true;
 			}
-		} else if (match(buf, title) && nkeymode == keymode) {
+		} else if (Tool::match(buf, LR2BMSTitle) && nkeymode == keymode) {
 			wcscpy(diff, ndiff);
-			wcscpy(title, buf);
-			break;
+			return true;
 		}
 	}
 
 	fclose(fp);
 	
-	lstrcat(preDiff, diff);
-	lstrcpy(diff, preDiff);
+	/* prediff: depreciated */
+	//lstrcat(preDiff, diff);
+	//lstrcpy(diff, preDiff);
+
+	return false;
+}
+
+void Detector::getLevel(TCHAR *diff) {
+	int keymode = LR2stat[LR_MODE];
+	TCHAR sig[10];
+	switch (keymode) {
+	case 7:
+		wcscpy(sig, L"SP");
+		break;
+	case 5:
+		wcscpy(sig, L"5Key");
+		break;
+	case 9:
+		wcscpy(sig, L"9Key");
+		break;
+	case 10:
+		wcscpy(sig, L"10Key");
+		break;
+	case 14:
+		wcscpy(sig, L"DP");
+		break;
+	}
+	wcscat(sig, L" ");
+
+	if (checkInsaneLevel(diff)) {}
+	else if (checkDiffLevelFromFile(diff)) {}
+	else { wcscpy(diff, L"☆"); TCHAR diffstr[10]; _itow(LR2stat[LR_DIFF], diffstr,10); wcscat(diff, diffstr); }
+
+	wcscat(sig, diff);
+	wcscpy(diff, sig);
 }
 
 bool Detector::IsIIDXBMS(TCHAR *title)
@@ -591,52 +637,13 @@ bool Detector::IsIIDXBMS(TCHAR *title)
 			continue;
 		if (memcmp(buf,L"//",4) == 0)
 			continue;
-		if (match(buf, title))
+		if (Tool::match(buf, title))
 			return true;
 	}
 
 	return false;
 }
 
-
-BOOL match(TCHAR *fname, TCHAR *filter) {
-	// auto trim for ...
-	int l = wcslen(filter);
-	if (filter[l-2] == 13) filter[l-2]=0, l-=2;
-	int i,j=0;
-	for (i=0; i<l; i++) {
-		if (filter[i] == L'?') {
-			j++;
-			continue;
-		} else if (filter[i] == L'*') {
-			int k=1;
-			while (TRUE) {
-				if (filter[i+k] == 0 && fname[j+k-1] == 0) return TRUE;	// 같이 끝나면 true
-				if (fname[j+k-1] == 0) return FALSE;	// 목표 문자열이 먼저 끝나면 false
-				if (filter[i+k] == L'?' || filter[i+k] == L'*') {	// 다음 syntax면 exit
-					j += k-1;
-					i += k-1;
-					break;
-				}
-				if (filter[i+k] != fname[j+k-1]) {
-					j++;
-					k=0;
-				}
-				k++;
-			}
-		} else {
-			if (fname[i]!=filter[j]) return FALSE;
-			while (fname[i+1] == L' ')
-				i++;
-			while (filter[j+1] == L' ')
-				j++;
-			j++;
-		}
-	}
-
-	if (fname[i] == 0 && filter[j] == 0) return TRUE;
-	else return FALSE;
-}
 
 bool Detector::isLR2Vaild() {
 	if (!LR2hWnd) return false;
@@ -649,4 +656,12 @@ void Detector::setRecordAlways(){
 	int val = 1;
 	SIZE_T len;
 	WriteProcessMemory(LR2h, (LPVOID)(addr), &val, sizeof(val), &len);
+}
+
+BOOL Detector::LoadInsaneLevel() {
+	return Level.LoadFile(L"getinsanelist.xml");
+}
+
+BOOL Detector::DownloadInsaneLevel() {
+	return Level.LoadFromInternet();
 }

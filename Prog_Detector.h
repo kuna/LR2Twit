@@ -5,6 +5,7 @@ using namespace std;
 #include "iconv.h"
 #pragma comment(lib, "iconv.lib")
 #include "Log.h"
+#include "level.h"
 
 //#define _BIT (0x00000040)	// just for 64bit
 // 0x00060000 - windows 7 64bit
@@ -25,6 +26,7 @@ using namespace std;
 #define LR_TITLE (0x000B1760)	// addr pointer
 #define LR_ARTIST (0x000964D8)	// addr pointer
 #define LR_GENRE (0x000B1764)	// addr pointer
+#define LR_HASH (0x0012F82C)	// addr pointer
 #define LR_DIFF (0x00096518)
 #define LR_GUAGE (0x0008F840)
 #define LR_GUAGENUM (0x00127200)
@@ -46,6 +48,7 @@ private:
 
 	HWND LR2hWnd;
 	HANDLE LR2h;
+	Data_Level Level;
 
 	HMODULE app_hmoudle;
 	size_t baseAddr;
@@ -69,6 +72,7 @@ public:
 	TCHAR LR2BMSTitle[255];
 	TCHAR LR2BMSArtist[255];
 	TCHAR LR2BMSGenre[255];
+	TCHAR LR2BMSHash[255];
 	double LR2Guage;
 
 	int getMemValInt(LPVOID addr);
@@ -85,7 +89,11 @@ public:
 
 	bool isLR2Vaild();
 	void setRecordAlways();
-	void checkDiffLevel(TCHAR *title, TCHAR *diff, int totalNotCnt=0, int keymode=7);
+	void getLevel(TCHAR *diff);
+	bool checkDiffLevelFromFile(TCHAR *diff);
+	bool checkInsaneLevel(TCHAR *diff);
+	BOOL LoadInsaneLevel();
+	BOOL DownloadInsaneLevel();
 };
 
 /* formatString */

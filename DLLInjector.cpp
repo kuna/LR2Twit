@@ -70,17 +70,36 @@ BOOL DLLInjector::DLL_Injection(int PID, char* PATH) {
 	// 여기서는 스레드를 생성하는 것이 아니라 실제로는 LoadLibraryA 함수를 호출
 	hThread = CreateRemoteThread(hProcess, NULL, 0, Funcation_Address, Virtual_Address, 0, NULL);
 	WaitForSingleObject(hThread, 200);
-	GetExitCodeThread(hThread, (LPDWORD)&g_hModule);
+	HRESULT r = GetExitCodeThread(hThread, (LPDWORD)&g_hModule);
 
 	CloseHandle(hThread);
 	CloseHandle(hProcess);
+
+	if (r == 0) {
+		l->writeLogLine(L"DLL INJECT", "LoadLibrary Failed;");
+		Funcation_Address = (LPTHREAD_START_ROUTINE)GetProcAddress(hMod, "GetLastError");
+		hThread = CreateRemoteThread(hProcess, NULL, 0, Funcation_Address, 0, 0, NULL);
+		WaitForSingleObject(hThread, 200);
+		HRESULT r = GetExitCodeThread(hThread, (LPDWORD)&g_hModule);
+		l->writeLogLine(L"CODE", (int)r);
+	} else {
+		l->writeLogLine(L"DLL INJECT", "Success");
+		Funcation_Address = (LPTHREAD_START_ROUTINE)GetProcAddress(hMod, "GetLastError");
+		hThread = CreateRemoteThread(hProcess, NULL, 0, Funcation_Address, 0, 0, NULL);
+		WaitForSingleObject(hThread, 200);
+		HRESULT r = GetExitCodeThread(hThread, (LPDWORD)&g_hModule);
+		l->writeLogLine(L"CODE", (int)r);
+	}
 
 	return TRUE;
 }
 
 BOOL DLLInjector::Inject(char *win_Class, char *win_Title, char *dll_Path) {
 	PID = GET_PID(win_Class, win_Title);
-	if (!PID) return FALSE;
+	if (!PID) {
+		l->writeLogLine(L"DLL INJECT", "No proper PID Found");
+		return FALSE;
+	}
 
 	DLL_Injection(PID, dll_Path);
 

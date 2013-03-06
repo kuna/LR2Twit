@@ -38,16 +38,15 @@ DLLInjector g_DLL;
 HHOOK hHook;
 LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
 	if (nCode == HC_ACTION) {
-		if (GetAsyncKeyState (VK_SHIFT) && !c_dect->isPlaying()) {
+		int bControlKeyDown = GetAsyncKeyState (VK_CONTROL);
+
+		if (bControlKeyDown && GetAsyncKeyState (VK_SHIFT) && !c_dect->isPlaying()) {
 			// show level
 			c_dect->getLR2Status();
 
-			TCHAR s1[256], s2[256], b[10];
+			TCHAR s1[256], s2[256];
 			lstrcpy(s1, c_dect->LR2BMSTitle);
-			_itow(c_dect->LR2stat[LR_DIFF], b, 10);
-			wcscpy(s2, L"¡Ù");
-			wcscat(s2, b);
-			c_dect->checkDiffLevel(s1, s2, c_dect->LR2stat[LR_NC], c_dect->LR2stat[LR_MODE]);
+			c_dect->getLevel(s2);
 
 			char msg[25];
 			int iLen = ::WideCharToMultiByte(CP_ACP, 0, s2, -1, msg, 0, NULL, NULL);
@@ -56,7 +55,18 @@ LRESULT CALLBACK HookProc(int nCode, WPARAM wParam, LPARAM lParam) {
 			setMessage(msg);
 		}
 
-		int bControlKeyDown = GetAsyncKeyState (VK_CONTROL);
+		if (bControlKeyDown && wParam == WM_KEYUP)
+		{
+			if (((EVENTMSG*)lParam)->message == 'U') {
+				// update file
+				if (c_dect->DownloadInsaneLevel()) {
+					MessageBox(0, L"Successfully download: getinsanelist.cgi", 0, 0);
+					c_dect->LoadInsaneLevel();
+				} else {
+					MessageBox(0, L"Failed to download: getinsanelist.cgi", 0, 0);
+				}
+			}
+		}
 		if (bControlKeyDown && wParam == WM_KEYUP && opt4 && c_dect->isLR2Vaild()) {
 			if (((EVENTMSG*)lParam)->message == 'T' && c_dect->isResultScreen()) {
 				if (c_dect->isAutoPlaying()) {
@@ -223,6 +233,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
    loadSettings();
    c_dect = new Detector(&m_log);
+   c_dect->LoadInsaneLevel();
+
    c_twit = new TwitProc(&m_log);
    if (!c_twit->loadToken()) {
 	   MessageBox(hWnd, m_Lang.GetLanguageW(L"DIALOG", L"NoOAuthToken").c_str(), L"", NULL);
@@ -242,6 +254,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    m_log.writeLogLine(L"setSharedMemory(); Excuted");
 
    startKeyHook();
+   g_DLL.l = &m_log;
 
    return TRUE;
 }
@@ -391,12 +404,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				DrawText(hdc, s, lstrlen(s), &rt, DT_LEFT);
 			}
 			
-			TCHAR s1[256], s2[256], b[10];
+			TCHAR s1[256], s2[256];
 			lstrcpy(s1, c_dect->LR2BMSTitle);
-			_itow(c_dect->LR2stat[LR_DIFF], b, 10);
-			wcscpy(s2, L"¡Ù");
-			wcscat(s2, b);
-			c_dect->checkDiffLevel(s1, s2, c_dect->LR2stat[LR_NC], c_dect->LR2stat[LR_MODE]);
+			c_dect->getLevel(s2);
 			SetRect(&rt, 10, 380, 200, 400);
 			DrawText(hdc, s2, lstrlen(s2), &rt, DT_LEFT);
 
@@ -691,7 +701,7 @@ void loadSettings() {
 	opt1 = _wtoi(_s);
 	GetPrivateProfileStringW(L"LR2TWIT", L"LR2_REMOVEAUTOLIMIT", L"0", _s, 255, L".\\settings.ini");
 	opt7 = _wtoi(_s);
-	GetPrivateProfileStringW(L"LR2TWIT", L"TWIT_MESSAGE", L"<[TITLE] ([DIFF]) [GUAGE] [RESULT]!![AUTO] [RATE]%([RANK]) - [EXS]/[EXMS] (PG[PG]/GR[GR]/GD[GD]/PR[PR]/BD[BD], [MC]/[NC] Combo)", _s, 255, L".\\settings.ini");
+	GetPrivateProfileStringW(L"LR2TWIT", L"TWIT_MESSAGE", L"¡¶[TITLE] ([DIFF])¡· [GUAGE] [RESULT]¢Ý - [RATE]%([RANK]), [MC]/[NC] Combo, [PR]+[BD] BP¢Ý", _s, 255, L".\\settings.ini");
 	lstrcpy(opt_message, _s);
 	GetPrivateProfileStringW(L"LR2TWIT", L"TWIT_ENCODING", L"SHIFT_JIS", _s, 255, L".\\settings.ini");
 	wcstombs(opt_encode, _s, 255);
