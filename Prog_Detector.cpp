@@ -327,7 +327,7 @@ bool Detector::getLR2Status() {
 	ReadProcessMemory(LR2h, (LPVOID)_addr, _str, sizeof(_str), &rl);
 	eucjp_to_cp949(string(_str), nstr);
 	lstrcpy(LR2BMSHash, nstr.c_str());
-
+	
 	ReadProcessMemory(LR2h, (LPVOID)(LR_GUAGENUM+_OFFSET), &LR2Guage, sizeof(LR2Guage), &rl);
 
 	return true;
@@ -593,6 +593,7 @@ bool Detector::checkDiffLevelFromFile(TCHAR *diff)
 void Detector::getLevel(TCHAR *diff) {
 	int keymode = LR2stat[LR_MODE];
 	TCHAR sig[10];
+	wcscpy(sig, L"");
 	switch (keymode) {
 	case 7:
 		wcscpy(sig, L"SP");

@@ -38,63 +38,63 @@ bool Log::endLog()
 }
 
 int Log::writeLogLine(WCHAR *key, WCHAR *body) {
-	return fwprintf(fp, L"[%s], %s\n", key, body);
+	return fwprintf(fp, L"[%s], %s\n", key, body), fflush(fp);
 }
 int Log::writeLogLine(WCHAR *key, const char* body) {
-	return fwprintf(fp, L"[%s], %S\n", key, body);
+	return fwprintf(fp, L"[%s], %S\n", key, body), fflush(fp);
 }
 int Log::writeLogLine_chr(WCHAR *key, WCHAR body) {
-	return fwprintf(fp, L"[%s], %c\n", key, body);
+	return fwprintf(fp, L"[%s], %c\n", key, body), fflush(fp);
 }
 int Log::writeLogLine_chr(WCHAR *key, char body) {
-	return fwprintf(fp, L"[%s], %C\n", key, body);
+	return fwprintf(fp, L"[%s], %C\n", key, body), fflush(fp);
 }
 int Log::writeLogLine_hex(WCHAR *key, int body) {
-	return fwprintf(fp, L"[%s], 0x%02lX\n", key, body);
+	return fwprintf(fp, L"[%s], 0x%02lX\n", key, body), fflush(fp);
 }
 int Log::writeLogLine(WCHAR *key, int body) {
-	return fwprintf(fp, L"[%s], %d\n", key, body);
+	return fwprintf(fp, L"[%s], %d\n", key, body), fflush(fp);
 }
 int Log::writeLogLine(WCHAR *key, double body) {
-	return fwprintf(fp, L"[%s], %lf\n", key, body);
+	return fwprintf(fp, L"[%s], %lf\n", key, body), fflush(fp);
 }
 int Log::writeLogLine(WCHAR *key, float body) {
-	return fwprintf(fp, L"[%s], %f\n", key, body);
+	return fwprintf(fp, L"[%s], %f\n", key, body), fflush(fp);
 }
 int Log::writeLogEmptyLine() {
-	return fwprintf(fp, L"\n");
+	return fwprintf(fp, L"\n"), fflush(fp);
 }
 
 
 int Log::writeLogLine(WCHAR *body) {
-	return fwprintf(fp, L"%s\n", body);
+	return fwprintf(fp, L"%s\n", body), fflush(fp);
 }
 int Log::writeLogLine(const char* body) {
-	return fwprintf(fp, L"%S\n", body);
+	return fwprintf(fp, L"%S\n", body), fflush(fp);
 }
 int Log::writeLogLine_chr(WCHAR body) {
-	return fwprintf(fp, L"%c\n", body);
+	return fwprintf(fp, L"%c\n", body), fflush(fp);
 }
 int Log::writeLogLine_chr(char body) {
-	return fwprintf(fp, L"%C\n", body);
+	return fwprintf(fp, L"%C\n", body), fflush(fp);
 }
 int Log::writeLogLine_hex(int body) {
-	return fwprintf(fp, L"0x%02lX\n", body);
+	return fwprintf(fp, L"0x%02lX\n", body), fflush(fp);
 }
 int Log::writeLogLine(int body) {
-	return fwprintf(fp, L"%d\n", body);
+	return fwprintf(fp, L"%d\n", body), fflush(fp);
 }
 int Log::writeLogLine(double body) {
-	return fwprintf(fp, L"%lf\n", body);
+	return fwprintf(fp, L"%lf\n", body), fflush(fp);
 }
 int Log::writeLogLine(float body) {
-	return fwprintf(fp, L"%f\n", body);
+	return fwprintf(fp, L"%f\n", body), fflush(fp);
 }
 
 int Log::writeDate() {
 	WCHAR str[255];
 	getDate(str);
-	return fwprintf(fp, L"%s\n", str);
+	return fwprintf(fp, L"%s\n", str), fflush(fp);
 }
 void Log::getDate(WCHAR *date)
 {

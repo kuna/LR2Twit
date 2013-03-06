@@ -411,8 +411,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			DrawText(hdc, s2, lstrlen(s2), &rt, DT_LEFT);
 
 			EndPaint(hWnd, &ps);
-			break;
 		}
+		break;
 	case WM_DESTROY:
 		delTray();
 		releaseKeyHook();
