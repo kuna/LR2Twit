@@ -2,13 +2,6 @@
 #include "Twitpic.h"
 
 // for multipart curl 
-#ifdef _DEBUG
-	#pragma comment(lib, ".\\\\Debug_lib\\libcurld.lib")
-	#pragma comment(lib, ".\\\\Debug_lib\\liboauth.lib")
-#else
-	#pragma comment(lib, "libcurl.lib")
-	#pragma comment(lib, "liboauth.lib")
-#endif
 #include "curl/curl.h"
 
 #pragma comment(lib, "libeay32.lib")
