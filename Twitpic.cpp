@@ -14,6 +14,7 @@
 using namespace std;
 
 #define API_PIC_TWITTER "http://upload.twitter.com/1/statuses/update_with_media.xml"
+#define API_STATUS_TWITTER "http://api.twitter.com/1/statuses/update.xml"
 //#define API_PIC_TWITTER "http://api.twitter.com/1/statuses/update.xml"//
 
 void Twitpic::set_account(char *ckey, char *cskey, char *atoken, char *astoken) {
@@ -138,6 +139,45 @@ int base64_encode(char *text, int numBytes, char **encodedText)
     return 0;
 }
 
+std::string char2hex( char dec )
+{
+	char dig1 = (dec&0xF0)>>4;
+	char dig2 = (dec&0x0F);
+	if ( 0<= dig1 && dig1<= 9) dig1+=48;    //0,48 in ascii
+	if (10<= dig1 && dig1<=15) dig1+=65-10; //A,65 in ascii
+	if ( 0<= dig2 && dig2<= 9) dig2+=48;
+	if (10<= dig2 && dig2<=15) dig2+=65-10;
+
+    std::string r;
+	r.append( &dig1, 1);
+	r.append( &dig2, 1);
+	return r;
+}
+
+std::string urlencode( const std::string &c )
+{
+
+    std::string escaped;
+	int max = c.length();
+	for(int i=0; i<max; i++)
+	{
+		if ( (48 <= c[i] && c[i] <= 57) ||//0-9
+			(65 <= c[i] && c[i] <= 90) ||//ABC...XYZ
+			(97 <= c[i] && c[i] <= 122) || //abc...xyz
+			(c[i]=='~' || c[i]=='-' || c[i]=='_' || c[i]=='.')
+			)
+		{
+			escaped.append( &c[i], 1);
+		}
+		else
+		{
+			escaped.append("%");
+			escaped.append( char2hex(c[i]) );//converts char 255 to string "FF"
+		}
+	}
+	return escaped;
+}
+
 
 Twitpic::Twitpic() {
 	strcpy(LR2PicPath, "");
@@ -210,6 +250,62 @@ string Twitpic::upload_pic(char *filepath, char *comment) {
 	curl_easy_cleanup(curl);
 	if (f_data) free(f_data);
 	if (f_encode_data) free(f_encode_data);
+	
+	return string(chunk.data);
+}
+
+string Twitpic::upload_status(char *comment) {
+	char *req_uri;
+	char *postarg;
+
+	req_uri = oauth_sign_url2(API_STATUS_TWITTER, &postarg, OA_HMAC, NULL, customerkey, customersecretkey,
+		accesstoken, accesstokensecret);
+	
+	for (int i=0; i<strlen(postarg); i++) {
+		if (postarg[i] == '&') postarg[i] = ',';
+	}
+
+	CURL *curl;
+	CURLcode res;
+	struct curl_slist *slist=NULL;
+
+	struct MemoryStruct chunk;
+	chunk.data=NULL;
+	chunk.size = 0;
+
+	curl = curl_easy_init();
+	curl_easy_setopt(curl, CURLOPT_URL, req_uri);
+	curl_easy_setopt(curl, CURLOPT_POST, 1);
+	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
+	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
+	
+	/* header set */
+	char customh[1024];
+	//slist = curl_slist_append(slist, "Expect:");	// for big data transmission
+	slist = curl_slist_append(slist, "Content-Type: application/x-www-form-urlencoded");
+	strcpy(customh, "Authorization: OAuth ");
+	strcat(customh, postarg);
+	slist = curl_slist_append(slist, customh);
+	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, slist); 
+
+	char statusMsg[256];
+	strcpy(statusMsg, "status=");
+	strcat(statusMsg, urlencode(comment).c_str());
+	curl_easy_setopt(curl, CURLOPT_COPYPOSTFIELDS, statusMsg);
+	
+	/* data set 
+	curl_httppost *formpost=NULL;
+	curl_httppost *lastptr=NULL;
+	curl_slist *headerlist=NULL;
+
+	curl_formadd( &formpost, &lastptr, CURLFORM_COPYNAME, "status", CURLFORM_COPYCONTENTS, comment, CURLFORM_END );
+	curl_easy_setopt( curl, CURLOPT_HTTPPOST, formpost );*/
+
+	// server result in chunk.data
+	res = curl_easy_perform(curl);
+
+	curl_slist_free_all(slist);
+	curl_easy_cleanup(curl);
 	
 	return string(chunk.data);
 }

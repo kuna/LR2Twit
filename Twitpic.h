@@ -21,6 +21,7 @@ public:
 	void set_account(char *ckey, char *cskey, char *atoken, char *astoken);
 	std::string upload_pic(char *filepath, char *comment);
 	std::string upload_pic(char *filepath);
+	std::string upload_status(char *comment);
 	BOOL CaptureScreen();
 };
 

@@ -1,6 +1,9 @@
 #ifndef __OAUTHLIB_H__
 #define __OAUTHLIB_H__
 
+// for debug .. you can remove it when finished
+#include <Windows.h>
+
 #include "time.h"
 #include <cstdlib>
 #include <sstream>
@@ -15,6 +18,7 @@ namespace oAuthLibDefaults
     /* Constants */
     const int OAUTHLIB_BUFFSIZE = 1024;
     const int OAUTHLIB_BUFFSIZE_LARGE = 1024;
+    const std::string OAUTHLIB_STATUS = "status";		// for status update KUNA
     const std::string OAUTHLIB_CONSUMERKEY_KEY = "oauth_consumer_key";
     const std::string OAUTHLIB_CALLBACK_KEY = "oauth_callback";
     const std::string OAUTHLIB_VERSION_KEY = "oauth_version";
@@ -41,9 +45,9 @@ namespace oAuthLibDefaults
 namespace oAuthTwitterApiUrls
 {
     /* Twitter OAuth API URLs */
-    const std::string OAUTHLIB_TWITTER_REQUEST_TOKEN_URL = "http://twitter.com/oauth/request_token";
-    const std::string OAUTHLIB_TWITTER_AUTHORIZE_URL = "http://twitter.com/oauth/authorize?oauth_token=";
-    const std::string OAUTHLIB_TWITTER_ACCESS_TOKEN_URL = "http://twitter.com/oauth/access_token";
+    const std::string OAUTHLIB_TWITTER_REQUEST_TOKEN_URL = "http://api.twitter.com/oauth/request_token";
+    const std::string OAUTHLIB_TWITTER_AUTHORIZE_URL = "http://api.twitter.com/oauth/authorize?oauth_token=";
+    const std::string OAUTHLIB_TWITTER_ACCESS_TOKEN_URL = "http://api.twitter.com/oauth/access_token";
 };
 
 typedef enum _eOAuthHttpRequestType
@@ -90,6 +94,10 @@ public:
 
     bool extractOAuthTokenKeySecret( const std::string& requestTokenResponse /* in */ );
 
+    oAuth clone();
+
+	void setStatusString(const std::string& str);
+
 private:
 
     /* OAuth data */
@@ -101,10 +109,16 @@ private:
     std::string m_nonce;
     std::string m_timeStamp;
     std::string m_oAuthScreenName;
+	std::string m_status;			
+	std::string statusString;		// KUNA
+
 
     /* OAuth twitter related utility methods */
+    void buildOAuthRawDataKeyValPairs( const std::string& rawData, /* in */
+                                       bool urlencodeData, /* in */
+                                       oAuthKeyValuePairs& rawDataKeyValuePairs /* out */ );
+
     bool buildOAuthTokenKeyValuePairs( const bool includeOAuthVerifierPin, /* in */
-                                       const std::string& rawData, /* in */
                                        const std::string& oauthSignature, /* in */
                                        oAuthKeyValuePairs& keyValueMap /* out */,
                                        const bool generateTimestamp /* in */ );

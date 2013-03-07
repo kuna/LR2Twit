@@ -557,7 +557,7 @@ void __cdecl doTwit(void *) {
 
 	string astr = string(pTemp);
 	delete [] pTemp;
-
+	
 	if (c_twit->sendTwit( astr )) {
 		setMessage( m_Lang.GetLanguageA("HOOK", "NormalTwit").c_str() );
 		playAlarm();
