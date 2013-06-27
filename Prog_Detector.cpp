@@ -160,44 +160,6 @@ BOOL WINAPI IsWinXPOver()
             && (osi.wProductType == VER_NT_WORKSTATION);
 }
 
-bool eucjp_to_cp949(const string& in, wstring& out)
-{
-	iconv_t cd;
-	bool ret = false;
-	const char* pszIn;
-	char* pszOut, *pos;
-	size_t inLen, outLen;
-	pszOut=NULL;
-	
-	cd = iconv_open("UTF-16LE",opt_encode);
-	if(cd == (iconv_t)(-1))
-	{
-		//OutputDebugString(L"error!\n");
-		return false; 
-	}
-	
-	inLen = in.length();
-	pszIn = in.c_str();
-	
-	outLen = (inLen+1) * 2;
-	pos = pszOut = (char*)calloc(outLen, sizeof(char));
-	if(!pszOut) {
-		//OutputDebugString(L"error - no size\n");
-		goto clean;
-	}
-	
-	if(iconv(cd, &pszIn, &inLen, &pos, &outLen)==-1) {
-		//OutputDebugString(L"error - convert fail\n");
-		goto clean;
-	}
-	out = wstring((TCHAR*)pszOut);
-	ret = true;
-clean:
-	iconv_close(cd);
-	if(pszOut) free(pszOut);
-	return ret;
-}
-
 Detector::Detector(Log *_l) {
 	lstrcpy(LR2WinTitle, opt_lr2title);
 	lstrcpy(LR2FormatStr, opt_message);
@@ -300,32 +262,32 @@ bool Detector::getLR2Status() {
 
 	_addr = getMemValInt((LPVOID)(LR_MAINTITLE+_OFFSET));
 	ReadProcessMemory(LR2h, (LPVOID)_addr, _str, sizeof(_str), &rl);
-	eucjp_to_cp949(string(_str), nstr);
+	Tool::eucjp_to_cp949(string(_str), nstr);
 	lstrcpy(LR2BMSMainTitle, nstr.c_str());
 
 	_addr = getMemValInt((LPVOID)(LR_SUBTITLE+_OFFSET));
 	ReadProcessMemory(LR2h, (LPVOID)_addr, _str, sizeof(_str), &rl);
-	eucjp_to_cp949(string(_str), nstr);
+	Tool::eucjp_to_cp949(string(_str), nstr);
 	lstrcpy(LR2BMSSubTitle, nstr.c_str());
 	
 	_addr = getMemValInt((LPVOID)(LR_TITLE+_OFFSET));
 	ReadProcessMemory(LR2h, (LPVOID)_addr, _str, sizeof(_str), &rl);
-	eucjp_to_cp949(string(_str), nstr);
+	Tool::eucjp_to_cp949(string(_str), nstr);
 	lstrcpy(LR2BMSTitle, trimString(nstr).c_str());	// trim
 
 	_addr = getMemValInt((LPVOID)(LR_ARTIST+_OFFSET));
 	ReadProcessMemory(LR2h, (LPVOID)_addr, _str, sizeof(_str), &rl);
-	eucjp_to_cp949(string(_str), nstr);
+	Tool::eucjp_to_cp949(string(_str), nstr);
 	lstrcpy(LR2BMSArtist, nstr.c_str());
 
 	_addr = getMemValInt((LPVOID)(LR_GENRE+_OFFSET));
 	ReadProcessMemory(LR2h, (LPVOID)_addr, _str, sizeof(_str), &rl);
-	eucjp_to_cp949(string(_str), nstr);
+	Tool::eucjp_to_cp949(string(_str), nstr);
 	lstrcpy(LR2BMSGenre, nstr.c_str());
 
 	_addr = getMemValInt((LPVOID)(LR_HASH+_OFFSET));
 	ReadProcessMemory(LR2h, (LPVOID)_addr, _str, sizeof(_str), &rl);
-	eucjp_to_cp949(string(_str), nstr);
+	Tool::eucjp_to_cp949(string(_str), nstr);
 	lstrcpy(LR2BMSHash, nstr.c_str());
 	
 	ReadProcessMemory(LR2h, (LPVOID)(LR_GUAGENUM+_OFFSET), &LR2Guage, sizeof(LR2Guage), &rl);

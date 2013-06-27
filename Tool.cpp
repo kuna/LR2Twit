@@ -39,3 +39,41 @@ BOOL Tool::match(TCHAR *fname, TCHAR *filter) {
 	if (fname[i] == 0 && filter[j] == 0) return TRUE;
 	else return FALSE;
 }
+
+BOOL Tool::eucjp_to_cp949(const string& in, wstring& out)
+{
+	iconv_t cd;
+	bool ret = false;
+	const char* pszIn;
+	char* pszOut, *pos;
+	size_t inLen, outLen;
+	pszOut=NULL;
+	
+	cd = iconv_open("UTF-16LE",opt_encode);
+	if(cd == (iconv_t)(-1))
+	{
+		//OutputDebugString(L"error!\n");
+		return false; 
+	}
+	
+	inLen = in.length();
+	pszIn = in.c_str();
+	
+	outLen = (inLen+1) * 2;
+	pos = pszOut = (char*)calloc(outLen, sizeof(char));
+	if(!pszOut) {
+		//OutputDebugString(L"error - no size\n");
+		goto clean;
+	}
+	
+	if(iconv(cd, &pszIn, &inLen, &pos, &outLen)==-1) {
+		//OutputDebugString(L"error - convert fail\n");
+		goto clean;
+	}
+	out = wstring((TCHAR*)pszOut);
+	ret = true;
+clean:
+	iconv_close(cd);
+	if(pszOut) free(pszOut);
+	return ret;
+}

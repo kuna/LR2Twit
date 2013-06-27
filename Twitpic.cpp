@@ -13,9 +13,8 @@
 #include "io.h"
 using namespace std;
 
-#define API_PIC_TWITTER "http://upload.twitter.com/1/statuses/update_with_media.xml"
-#define API_STATUS_TWITTER "http://api.twitter.com/1/statuses/update.xml"
-//#define API_PIC_TWITTER "http://api.twitter.com/1/statuses/update.xml"//
+#define API_PIC_TWITTER "http://api.twitter.com/1.1/statuses/update_with_media.json"
+#define API_STATUS_TWITTER "http://api.twitter.com/1.1/statuses/update.json"
 
 void Twitpic::set_account(char *ckey, char *cskey, char *atoken, char *astoken) {
 	strcpy(customerkey, ckey);

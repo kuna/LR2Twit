@@ -1,6 +1,11 @@
-
 #include "Markup.h"
 #include "Log.h"
+#include <string>
+using namespace std;
+
+//#include "sqlite3.h"
+//#include "CppSQLite3U.h"
+//#pragma comment(lib, "sqlite3.lib")
 #define MAX_LIST 2000
 
 class Data_Level {
@@ -14,6 +19,7 @@ private:
 	int m_cnt;
 	CMarkup xml;
 	Log *l;
+
 public:
 	Data_Level();
 
@@ -24,3 +30,4 @@ public:
 };
 
 #define _INSANE_URL "http://www.dream-pro.info/~lavalse/LR2IR/getinsanelist.cgi"
+#define _DATABASE "song.db"

@@ -2,9 +2,8 @@
 using namespace std;
 #include <map>
 
-#include "iconv.h"
-#pragma comment(lib, "iconv.lib")
 #include "Log.h"
+#include "Tool.h"
 #include "level.h"
 
 //#define _BIT (0x00000040)	// just for 64bit
@@ -95,8 +94,3 @@ public:
 	BOOL LoadInsaneLevel();
 	BOOL DownloadInsaneLevel();
 };
-
-/* formatString */
-
-
-BOOL match(TCHAR *fname, TCHAR *filter);

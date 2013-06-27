@@ -22,6 +22,7 @@ public:
 	std::string upload_pic(char *filepath, char *comment);
 	std::string upload_pic(char *filepath);
 	std::string upload_status(char *comment);
+	std::string getBearerToken();
 	BOOL CaptureScreen();
 };
 

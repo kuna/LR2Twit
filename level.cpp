@@ -3,9 +3,6 @@
 #include "Tool.h"
 #include <stdio.h>
 
-#include <string>
-using namespace std;
-
 #ifdef _DEBUG
 	#pragma comment(lib, ".\\\\Debug_lib\\libcurld.lib")
 	#pragma comment(lib, ".\\\\Debug_lib\\liboauth.lib")
