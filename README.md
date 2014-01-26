@@ -105,7 +105,7 @@ Release note
 
 팁
 -----------
-# 1. 레겍스(치환자)를 이용하여 여러 언어, 혹은 다양한 방식으로 트윗 메시지를 설정할 수 있습니다.
+~ 1. 레겍스(치환자)를 이용하여 여러 언어, 혹은 다양한 방식으로 트윗 메시지를 설정할 수 있습니다.
 
 settings.ini를 편집해 보세요.
 
@@ -117,7 +117,7 @@ TWIT_MESSAGE=I [RESULT]ed "[TITLE]" [SUBTITLE] song[AUTO]. EX SCORE : [EXS]/[EXM
 
 TWIT_MESSAGE="[TITLE]" [SUBTITLE] 曲を　[GUAGE]のゲージで　[RESULT]しました[AUTO]。EX SCORE : [EXS]/[EXMS] - [RATE]%([RANK]) - [PG]/[GR]/[GD]/[BD]/[PR] #BMS #LR2
 
-# 2. 타 국가권들을 위해서 다양한 인코딩을 지원하도록 신경 썼습니다.
+~ 2. 타 국가권들을 위해서 다양한 인코딩을 지원하도록 신경 썼습니다.
 
 기본 인코딩은 CP949(EUC-KR)이며, 일본의 경우에는 SHIFT_JIS로 옵션을 바꾸면 어플로케일 없이도 쉽게 프로그램 사용이 가능합니다.
 
@@ -127,7 +127,7 @@ TWIT_ENCODING=CP949
 
 TWIT_ENCODING=SHIFT_JIS
 
-# 3. 현재까지 지원하는 레겍스들은 다음과 같습니다.
+~ 3. 현재까지 지원하는 레겍스들은 다음과 같습니다.
 
 [SCORE]
 
@@ -169,7 +169,7 @@ TWIT_ENCODING=SHIFT_JIS
 
 [IRNOW] - my max Internet Ranking
 
-# 4. (LR2Twit ver 2.0 alpha 부터 적용되는 내용입니다)
+~ 4. (LR2Twit ver 2.0 alpha 부터 적용되는 내용입니다)
 
  LR2Twit에서는 여러 단축키를 지원하는데, 이 기능을 사용하려면 옵션에서 "바로가기 키 활성화"를 체크해 주세요.
 
@@ -181,4 +181,6 @@ TWIT_ENCODING=SHIFT_JIS
 
 * Ctrl+Y : 리절트 화면에서 스크린샷 트윗 (딜레이 없음) - 주:자동 스크린샷 트윗의 딜레이는 3.5초 입니다.
 
-# 5. 전체화면에서 DX Overlay/Screenshot Twit 기능을 사용하려면, 먼저 "settings.ini"에서 "TWIT_DLLAUTOINJECTATSTARTUP" 값을 "0"으로 설정해 주신 후, LR2Twit 프로그램을 켠 후에 Lunatic Rave 2를 전체화면 상태에서 "Ctrl+A"로 수동 DLL Injection 시켜주셔야 합니다.(alpha2) ... 프로그램 종특인지, 화면 모드가 수정되면 DLL Injection이 죽어버립니다 ㅡ,.ㅡ
+~ 5. 전체화면에서 DX Overlay/Screenshot Twit 기능을 사용하려면, 먼저 "settings.ini"에서 "TWIT_DLLAUTOINJECTATSTARTUP" 값을 "0"으로 설정해 주신 후, LR2Twit 프로그램을 켠 후에 Lunatic Rave 2를 전체화면 상태에서 "Ctrl+A"로 수동 DLL Injection 시켜주셔야 합니다.
+
+(alpha2) ... 프로그램 종특인지, 화면 모드가 수정되면 DLL Injection이 죽어버립니다 ㅡ,.ㅡ
