@@ -46,3 +46,6 @@ extern int opt7; // remove autoplay limit (WARNING)
 extern TCHAR opt_lr2title[255];
 extern char opt_encode[255];
 extern TCHAR opt_message[255];
+
+// should be updated
+#define VERSIONSTRING L"140127"

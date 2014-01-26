@@ -6,7 +6,6 @@
 #include "DLLInjector.h"
 #include "lang.h"
 
-#include <atlcore.h> /*string.wstring*/
 #include <shellapi.h>	/*shell icon*/
 #include <process.h>	/* thread */
 
@@ -16,6 +15,7 @@
 
 #define MAX_LOADSTRING 100
 #define CAPTURE_DELAY 3500
+//#define DEBUG_LR2TWIT
 
 // Global Variables:
 HINSTANCE hInst;								// current instance
@@ -33,6 +33,9 @@ LanguageSetting m_Lang;
 
 // DLL Injector
 DLLInjector g_DLL;
+
+// Twitpic processor
+Twitpic m_tpic;
 
 // for lowlevel Hooking
 HHOOK hHook;
@@ -125,6 +128,9 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 {
 	UNREFERENCED_PARAMETER(hPrevInstance);
 	UNREFERENCED_PARAMETER(lpCmdLine);
+	
+
+   hInst = hInstance; // Store instance handle in our global variable
 
  	// TODO: Place code here.
 	MSG msg;
@@ -148,8 +154,11 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 	{
 		if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg))
 		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
+			if (IsDialogMessage(m_hWnd, &msg)) {
+			} else {
+				TranslateMessage(&msg);
+				DispatchMessage(&msg);
+			}
 		}
 	}
 
@@ -206,10 +215,8 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {
    HWND hWnd;
 
-   hInst = hInstance; // Store instance handle in our global variable
-
-   hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW,
-      CW_USEDEFAULT, CW_USEDEFAULT, 240, 290, NULL, NULL, hInstance, NULL);
+   hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME ^ WS_MAXIMIZEBOX ^ WS_MINIMIZEBOX,
+      CW_USEDEFAULT, CW_USEDEFAULT, 240, 350, NULL, NULL, hInstance, NULL);
 	m_hWnd = hWnd;
 
    if (!hWnd)
@@ -261,6 +268,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 
 bool b_detected = false;
+HBITMAP hBitmap;	// logo bitmap
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
@@ -274,34 +282,89 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	switch (message)
 	{
 	case WM_CREATE:
-		c1_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg1").c_str(), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-			10, 10, 200, 20, hWnd, (HMENU)ID_CHK1, hInst, NULL);
-		c2_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg2").c_str(), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-			10, 30, 200, 20, hWnd, (HMENU)ID_CHK2, hInst, NULL);
-		c3_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg3").c_str(), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-			10, 50, 200, 20, hWnd, (HMENU)ID_CHK3, hInst, NULL);
-		c4_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg4").c_str(), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-			10, 70, 200, 20, hWnd, (HMENU)ID_CHK4, hInst, NULL);
-		c5_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg5").c_str(), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-			10, 90, 200, 20, hWnd, (HMENU)ID_CHK5, hInst, NULL);
-		c6_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg5_1").c_str(), WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-			10, 110, 200, 20, hWnd, (HMENU)ID_CHK6, hInst, NULL);
+		{
+			// for dialog-like font
+			LOGFONT lf;
+			GetObject (GetStockObject(DEFAULT_GUI_FONT), sizeof(LOGFONT), &lf); 
+			HFONT hFont = CreateFont (lf.lfHeight, lf.lfWidth, 
+				lf.lfEscapement, lf.lfOrientation, lf.lfWeight, 
+				lf.lfItalic, lf.lfUnderline, lf.lfStrikeOut, lf.lfCharSet, 
+				lf.lfOutPrecision, lf.lfClipPrecision, lf.lfQuality, 
+				lf.lfPitchAndFamily, lf.lfFaceName); 
 
-		e1_hWnd = CreateWindow(L"edit", L"", WS_CHILD | WS_VISIBLE | BS_TEXT | WS_BORDER,
-			10, 140, 200, 20, hWnd, (HMENU)0, hInst, NULL);
-		e2_hWnd = CreateWindow(L"edit", L"", WS_CHILD | WS_VISIBLE | BS_TEXT | WS_BORDER | ES_PASSWORD,
-			10, 160, 200, 20, hWnd, (HMENU)0, hInst, NULL);
-		b3_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg6").c_str(), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-			10, 180, 200, 20, hWnd, (HMENU)ID_TWEETAUTH, hInst, NULL);
+#define COMMON_CHKBOX (WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX | WS_TABSTOP)
+#define COMMON_EDIT (WS_CHILD | WS_VISIBLE | BS_TEXT | WS_BORDER | WS_TABSTOP)
+#define COMMON_BUTTON (WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON | WS_TABSTOP)
+#define COMMON_WIDTH 210
 
-		b1_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg7").c_str(), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-			10, 210, 60, 20, hWnd, (HMENU)ID_OK, hInst, NULL);
-		b2_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg8").c_str(), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-			80, 210, 60, 20, hWnd, (HMENU)ID_CANCEL, hInst, NULL);
-		b4_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg9").c_str(), WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-			160, 210, 40, 20, hWnd, (HMENU)ID_TWIT, hInst, NULL);
+			c1_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg1").c_str(), COMMON_CHKBOX,
+				10, 90, COMMON_WIDTH, 20, hWnd, (HMENU)ID_CHK1, hInst, NULL);
+			c2_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg2").c_str(), COMMON_CHKBOX,
+				10, 110, COMMON_WIDTH, 20, hWnd, (HMENU)ID_CHK2, hInst, NULL);
+			c3_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg3").c_str(), COMMON_CHKBOX,
+				10, 130, COMMON_WIDTH, 20, hWnd, (HMENU)ID_CHK3, hInst, NULL);
+			c4_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg4").c_str(), COMMON_CHKBOX,
+				10, 150, COMMON_WIDTH, 20, hWnd, (HMENU)ID_CHK4, hInst, NULL);
+			c5_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg5").c_str(), COMMON_CHKBOX,
+				10, 170, COMMON_WIDTH, 20, hWnd, (HMENU)ID_CHK5, hInst, NULL);
+			c6_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg5_1").c_str(), COMMON_CHKBOX,
+				10, 190, COMMON_WIDTH, 20, hWnd, (HMENU)ID_CHK6, hInst, NULL);
 
-		break;
+			e1_hWnd = CreateWindow(L"edit", L"", COMMON_EDIT,
+				70, 220, COMMON_WIDTH-60, 18, hWnd, (HMENU)0, hInst, NULL);
+			e2_hWnd = CreateWindow(L"edit", L"", COMMON_EDIT | ES_PASSWORD,
+				70, 240, COMMON_WIDTH-60, 18, hWnd, (HMENU)0, hInst, NULL);
+			b3_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg6").c_str(), COMMON_BUTTON,
+				10, 260, COMMON_WIDTH, 20, hWnd, (HMENU)ID_TWEETAUTH, hInst, NULL);
+
+			b1_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg7").c_str(), COMMON_BUTTON,
+				10, 290, 60, 20, hWnd, (HMENU)ID_OK, hInst, NULL);
+			b2_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg8").c_str(), COMMON_BUTTON,
+				80, 290, 60, 20, hWnd, (HMENU)ID_CANCEL, hInst, NULL);
+			b4_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg9").c_str(), COMMON_BUTTON,
+				160, 290, 60, 20, hWnd, (HMENU)ID_TWIT, hInst, NULL);
+
+			// labels
+#define COMMON_LABEL (WS_CHILD | WS_VISIBLE)
+			HWND lbl1 = CreateWindow(L"static", L"by @kuna_kr - " VERSIONSTRING, COMMON_LABEL,
+				80, 65, 160, 20, hWnd, (HMENU)NULL, hInst, NULL);
+			EnableWindow(lbl1, FALSE);
+			HWND lbl2 = CreateWindow(L"static", L"ID", COMMON_LABEL,
+				10, 220, 60, 20, hWnd, (HMENU)NULL, hInst, NULL);
+			HWND lbl3 = CreateWindow(L"static", L"Password", COMMON_LABEL,
+				10, 240, 60, 20, hWnd, (HMENU)NULL, hInst, NULL);
+
+			// font change
+			SendMessage (c1_hWnd, WM_SETFONT, (WPARAM)hFont, TRUE);
+			SendMessage (c2_hWnd, WM_SETFONT, (WPARAM)hFont, TRUE);
+			SendMessage (c3_hWnd, WM_SETFONT, (WPARAM)hFont, TRUE);
+			SendMessage (c4_hWnd, WM_SETFONT, (WPARAM)hFont, TRUE);
+			SendMessage (c5_hWnd, WM_SETFONT, (WPARAM)hFont, TRUE);
+			SendMessage (c6_hWnd, WM_SETFONT, (WPARAM)hFont, TRUE);
+			SendMessage (e1_hWnd, WM_SETFONT, (WPARAM)hFont, TRUE);
+			SendMessage (e2_hWnd, WM_SETFONT, (WPARAM)hFont, TRUE);
+			SendMessage (b1_hWnd, WM_SETFONT, (WPARAM)hFont, TRUE);
+			SendMessage (b2_hWnd, WM_SETFONT, (WPARAM)hFont, TRUE);
+			SendMessage (b3_hWnd, WM_SETFONT, (WPARAM)hFont, TRUE);
+			SendMessage (b4_hWnd, WM_SETFONT, (WPARAM)hFont, TRUE);
+			SendMessage (lbl1, WM_SETFONT, (WPARAM)hFont, TRUE);
+			SendMessage (lbl2, WM_SETFONT, (WPARAM)hFont, TRUE);
+			SendMessage (lbl3, WM_SETFONT, (WPARAM)hFont, TRUE);
+						
+			// load logo from res
+			hBitmap = LoadBitmap(hInst, MAKEINTRESOURCE(IDB_LOGO));
+
+			break;
+		}
+
+	case WM_CTLCOLORSTATIC:	// for transparent ctl
+		{
+			HDC hdcStatic = (HDC) wParam; 
+			SetTextColor(hdcStatic, RGB(0,0,0));    
+			SetBkMode (hdcStatic, TRANSPARENT);
+
+			return (LRESULT)GetStockObject(NULL_BRUSH);
+		}
 	case WM_COMMAND:
 		wmId    = LOWORD(wParam);
 		wmEvent = HIWORD(wParam);
@@ -380,7 +443,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		{
 			hdc = BeginPaint(hWnd, &ps);
 			
+			// print logo
+			HDC hdcMem = CreateCompatibleDC(hdc);
+			SelectObject(hdcMem, hBitmap);
+			BitBlt(hdc, 10, 10, 224, 64, hdcMem, 0, 0, SRCCOPY);
+			DeleteDC(hdcMem);
+			
 			// debug code
+#ifdef DEBUG_LR2TWIT
 			swprintf(s, L"%d - %d/%d/%d/%d/%d", c_dect->LR2stat[LR_SCORE],
 			c_dect->LR2stat[LR_PG], 
 			c_dect->LR2stat[LR_GR], 
@@ -409,6 +479,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			c_dect->getLevel(s2);
 			SetRect(&rt, 10, 380, 200, 400);
 			DrawText(hdc, s2, lstrlen(s2), &rt, DT_LEFT);
+#endif
 
 			EndPaint(hWnd, &ps);
 		}
@@ -424,7 +495,9 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		PostQuitMessage(0);
 		break;
 	case WM_TIMER:
+#ifdef DEBUG_LR2TWIT
 		InvalidateRect(hWnd, NULL, TRUE);
+#endif
 
 		if (!c_dect->getLR2Status()) {
 			changeTray(false);
@@ -493,8 +566,30 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		}
 
 		break;
-	case WM_LBUTTONUP:
+	case WM_MOUSEMOVE:
 		{
+			int x=(int)(short)LOWORD(lParam);
+			int y=(int)(short)HIWORD(lParam);
+
+			if (y < 80) {
+				SetCursor( LoadCursor(0 , IDC_HAND) );
+			} else {
+				SetCursor( LoadCursor(0 , IDC_ARROW) );
+			}
+
+			break;
+		}
+
+	case WM_LBUTTONDOWN:
+		{
+			int x=(int)(short)LOWORD(lParam);
+			int y=(int)(short)HIWORD(lParam);
+
+			if (y < 80) {
+				// go to github page to see new version
+				ShellExecuteA(NULL, "Open", "https://github.com/kuna/LR2Twit", NULL, NULL, SW_SHOW);
+			}
+
 			break;
 		}
 	case ID_NOTIFY_CLICK:
@@ -561,6 +656,7 @@ void __cdecl doTwit(void *) {
 	if (c_twit->sendTwit( astr )) {
 		setMessage( m_Lang.GetLanguageA("HOOK", "NormalTwit").c_str() );
 		playAlarm();
+	} else {
 	}
 }
 
@@ -568,7 +664,6 @@ void __cdecl doTwitwithPic(PVOID delaymilltime) {
 	// for cancel!
 	if (c_dect->LR2stat[LR_SCORE] == 0) return;
 	if (c_dect->isAutoPlaying()) return;
-
 
 	if (delaymilltime != 0) {
 		DWORD sleeptime = CAPTURE_DELAY;
@@ -588,23 +683,26 @@ void __cdecl doTwitwithPic(PVOID delaymilltime) {
 	pTemp = new char[iLen+1];
 	::WideCharToMultiByte(CP_UTF8, 0, str, -1, pTemp, iLen, NULL, NULL);
 	
-	Twitpic m_tpic;
-	m_tpic.set_account(c_twit->customerKey, c_twit->customerSecret,
-		c_twit->accessToken, c_twit->accessTokenSecret);
+	string astr = string(pTemp);
+	delete [] pTemp;
+	
+	/*m_tpic.set_account(c_twit->customerKey, c_twit->customerSecret,
+		c_twit->accessToken, c_twit->accessTokenSecret);*/
 	if (m_tpic.CaptureScreen())	// wait till finish
-	{		// remove after update
+	{		
+		// remove after update
 		setMessage( m_Lang.GetLanguageA("HOOK", "PicTwitWait").c_str() );
-		string res = m_tpic.upload_pic( m_tpic.LR2PicPath, pTemp );
-		remove(m_tpic.LR2PicPath);
-		
-		setMessage( m_Lang.GetLanguageA("HOOK", "PicTwit").c_str() );
-		m_log.writeLogLine( res.c_str() );
-		playAlarm();
+		string hashdata = m_tpic.getHashData( m_tpic.LR2PicPath );
+		if (c_twit->sendMediaTwit( astr, hashdata )) {
+			setMessage( m_Lang.GetLanguageA("HOOK", "PicTwit").c_str() );
+			playAlarm();
+			//remove(m_tpic.LR2PicPath);
+		} else {
+			m_log.writeLogLine( "Screen tweet failed." );
+		}
 	} else {
 		m_log.writeLogLine( "Failed to capture screen." );
 	}
-	
-	delete [] pTemp;
 }
 
 void doTray() {

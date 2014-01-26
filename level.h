@@ -1,11 +1,8 @@
-#include "Markup.h"
+#include "Markup.h" // edited for complier error
 #include "Log.h"
 #include <string>
 using namespace std;
 
-//#include "sqlite3.h"
-//#include "CppSQLite3U.h"
-//#pragma comment(lib, "sqlite3.lib")
 #define MAX_LIST 2000
 
 class Data_Level {

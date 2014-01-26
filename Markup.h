@@ -11,6 +11,7 @@
 
 #include <stdlib.h>
 #include <string.h> // memcpy, memset, strcmp...
+//#include <atlstr.h>	// for non-use MFC
 
 // Major build options
 // MARKUP_WCHAR wide char (2-byte UTF-16 on Windows, 4-byte UTF-32 on Linux and OS X)
@@ -31,7 +32,7 @@
 #if ! defined(MARKUP_SAFESTR) // not VC++ safe strings
 #pragma warning(disable:4996) // VC++ 2005 deprecated function warnings
 #endif // not VC++ safe strings
-#if defined(MARKUP_STL) && _MSC_VER < 1400 // STL pre VC++ 2005
+#if (! defined(MARKUP_STL)) && _MSC_VER < 1400 // STL pre VC++ 2005
 #pragma warning(disable:4786) // std::string long names
 #endif // VC++ 2005 STL
 #else // not VC++
@@ -141,7 +142,7 @@
 // String type and function defines (compiler and build-option dependent)
 // Define MARKUP_STL to use STL strings
 //
-#if defined(MARKUP_STL) // STL (MARKUP_STL)
+#if ! defined(MARKUP_STL) // STL
 #include <string>
 #if defined(MARKUP_WCHAR)
 #define MCD_STR std::wstring

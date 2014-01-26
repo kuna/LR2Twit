@@ -1,17 +1,6 @@
 #include "stdafx.h"
 #include "TwitProc.h"
 
-/*
-TwitProc::TwitProc() {
-	strcpy(customerKey, "v5AS0GWeiJ1ovbGHWY50w");
-	strcpy(customerSecret, "TPI2qwpuLpj6Yj604zPoQMC0BaLwMGxHK6EYx8faPpc"); 
-
-	strcpy(request_token_url, "http://api.twitter.com/oauth/request_token");
-	strcpy(authorize_url, "http://api.twitter.com/oauth/authorize");
-	strcpy(access_token_url, "http://api.twitter.com/oauth/access_token");
-
-}*/
-
 TwitProc::TwitProc(Log *_l) {
 	l = _l;
 
@@ -86,37 +75,37 @@ bool TwitProc::getToken(string id, string pass) {
     /* Step 1: Check if we alredy have OAuth access token from a previous run */
     std::string myOAuthAccessTokenKey("");
     std::string myOAuthAccessTokenSecret("");
-    std::ifstream oAuthTokenKeyIn;
-    std::ifstream oAuthTokenSecretIn;
 
 	/* Step 2: Get request token key and secret */
 	std::string authUrl;
 	twitterObj.oAuthRequestToken( authUrl );
 
 	/* Step 3: Get PIN  */
-	memset( tmpBuf, 0, 1024 );
-	bool res = twitterObj.oAuthHandlePIN( authUrl );
-	if (!res) {
-		if (MessageBox(NULL, L"Token 가져오기에 실패하였습니다. 수동으로 Token을 가져오시겠습니까 'ㅠ'?", L"", MB_YESNO) == IDYES) {
-			memset( tmpBuf, 0, 1024 );
-			//WinExec(authUrl.c_str(), NULL);
-			ShellExecuteA(NULL, "Open", authUrl.c_str(), NULL, NULL, SW_SHOW);
-			AllocConsole();
-			freopen("CONOUT$", "wt", stdout);
-			freopen("CONIN$", "r", stdin);
-			printf("From this site:%s\nEnter PIN :\n", authUrl.c_str());
-			gets( tmpBuf );
-			FreeConsole();
-			tmpStr = tmpBuf;
-			twitterObj.getOAuth().setOAuthPin( tmpStr );
-		} else {
+	if (MessageBox(NULL, L"[예]를 누르면 계정을 자동으로 인증합니다(recommended).\n[아니오]를 누르면 계정을 수동으로 인증합니다.", L"", MB_YESNO | MB_ICONINFORMATION) == IDYES) {
+		// auto authorizez
+		if (!twitterObj.oAuthHandlePIN( authUrl )) {
+			MessageBox(NULL, L"Token 가져오기에 실패했습니다.", L"", MB_ICONEXCLAMATION);
 			return false;
 		}
+	} else {
+		// user auth
+		memset( tmpBuf, 0, 1024 );
+		ShellExecuteA(NULL, "Open", authUrl.c_str(), NULL, NULL, SW_SHOW);
+		AllocConsole();
+		freopen("CONOUT$", "wt", stdout);
+		freopen("CONIN$", "r", stdin);
+		printf("From this site:%s\nEnter PIN :\n", authUrl.c_str());
+		gets( tmpBuf );
+		FreeConsole();
+		tmpStr = tmpBuf;
+		twitterObj.getOAuth().setOAuthPin( tmpStr );
 	}
-	//}*/
 
 	/* Step 4: Exchange request token with access token */
-	twitterObj.oAuthAccessToken();
+	if (!twitterObj.oAuthAccessToken()) {
+		MessageBox(NULL, L"Token 가져오기에 실패했습니다.", L"", MB_ICONEXCLAMATION);
+		return false;
+	}
 
 	/* Step 5: Now, save this access token key and secret for future use without PIN */
 	twitterObj.getOAuth().getOAuthTokenKey( myOAuthAccessTokenKey );
@@ -139,7 +128,6 @@ bool TwitProc::getToken(string id, string pass) {
 	oAuthTokenSecretOut.close();
 	/* OAuth flow ends */
 
-
 	// copy key
 	strcpy(accessToken, myOAuthAccessTokenKey.c_str() );
 	strcpy(accessTokenSecret, myOAuthAccessTokenSecret.c_str() );
@@ -149,6 +137,10 @@ bool TwitProc::getToken(string id, string pass) {
 
 bool TwitProc::sendTwit(string msg)
 {
+	if (msg.length() > 140) {
+		msg = msg.substr(0, 140);
+	}
+
 	if (twitterObj.statusUpdate( msg )) {
 		string replyMsg;
 		twitterObj.getLastWebResponse( replyMsg );
@@ -160,7 +152,25 @@ bool TwitProc::sendTwit(string msg)
 		l->writeLogLine( L"Twit Error", replyMsg.c_str() );
 		return false;
 	}
-	// wprintf(L"\r\nUpdate Result:\r\n%s\r\n", submitResult.c_str());
+}
+
+bool TwitProc::sendMediaTwit(string msg, string data)
+{
+	if (msg.length() > 140) {
+		msg = msg.substr(0, 140);
+	}
+
+	if (twitterObj.uploadPicture( data, msg )) {
+		string replyMsg;
+		twitterObj.getLastWebResponse( replyMsg );
+		l->writeLogLine( L"MediaTwit", replyMsg.c_str() );
+		return true;
+	} else {
+		string replyMsg;
+		twitterObj.getLastCurlError( replyMsg );
+		l->writeLogLine( L"MediaTwit Error", replyMsg.c_str() );
+		return false;
+	}
 }
 
 size_t write_data(void *buffer, size_t size, size_t nmemb, void* userp)

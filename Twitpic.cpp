@@ -1,27 +1,10 @@
 #include "stdafx.h"
 #include "Twitpic.h"
 
-// for multipart curl 
-#include "curl/curl.h"
-
-#pragma comment(lib, "libeay32.lib")
-#pragma comment(lib, "ssleay32.lib")
-#include "oauth.h"
-
 #include <string>
 #include "stdio.h"
 #include "io.h"
 using namespace std;
-
-#define API_PIC_TWITTER "http://api.twitter.com/1.1/statuses/update_with_media.json"
-#define API_STATUS_TWITTER "http://api.twitter.com/1.1/statuses/update.json"
-
-void Twitpic::set_account(char *ckey, char *cskey, char *atoken, char *astoken) {
-	strcpy(customerkey, ckey);
-	strcpy(customersecretkey, cskey);
-	strcpy(accesstoken, atoken);
-	strcpy(accesstokensecret, astoken);
-}
 
 #include <string>
 using namespace std;
@@ -187,13 +170,7 @@ Twitpic::~Twitpic() {
 	releaseSharedMemory();
 }
 
-string Twitpic::upload_pic(char *filepath, char *comment) {
-	char *req_uri;
-	char *postarg;
-
-	req_uri = oauth_sign_url2(API_PIC_TWITTER, &postarg, OA_HMAC, NULL, customerkey, customersecretkey,
-		accesstoken, accesstokensecret);
-	
+string Twitpic::getHashData(char *filepath) {
 	char *f_data = (char*)malloc(3000000);
 	char *f_encode_data;
 	FILE *fp = fopen(filepath, "rb");
@@ -204,113 +181,14 @@ string Twitpic::upload_pic(char *filepath, char *comment) {
 	fread(f_data, 1, f_len, fp);
 	fclose(fp);
 	base64_encode(f_data, f_len, &f_encode_data);
+	OutputDebugStringA(f_encode_data);
 
-	for (int i=0; i<strlen(postarg); i++) {
-		if (postarg[i] == '&') postarg[i] = ',';
-	}
+	string _ret = string(f_encode_data);
 
-
-	CURL *curl;
-	CURLcode res;
-	struct curl_slist *slist=NULL;
-
-	struct MemoryStruct chunk;
-	chunk.data=NULL;
-	chunk.size = 0;
-
-	curl = curl_easy_init();
-	curl_easy_setopt(curl, CURLOPT_URL, req_uri);
-	curl_easy_setopt(curl, CURLOPT_POST, 1);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-	
-	/* header set */
-	char customh[1024];
-	slist = curl_slist_append(slist, "Expect:");	// for big data transmission
-	slist = curl_slist_append(slist, "Content-Type: multipart/form-data");
-	strcpy(customh, "Authorization: OAuth ");
-	strcat(customh, postarg);
-	slist = curl_slist_append(slist, customh);
-	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, slist); 
-	
-	/* data set */
-	curl_httppost *formpost=NULL;
-	curl_httppost *lastptr=NULL;
-	curl_slist *headerlist=NULL;
-
-	curl_formadd( &formpost, &lastptr, CURLFORM_COPYNAME, "media_data[]", CURLFORM_COPYCONTENTS, f_encode_data, CURLFORM_END );
-	curl_formadd( &formpost, &lastptr, CURLFORM_COPYNAME, "status", CURLFORM_COPYCONTENTS, comment, CURLFORM_END );
-	curl_easy_setopt( curl, CURLOPT_HTTPPOST, formpost );
-
-	// server result in chunk.data
-	res = curl_easy_perform(curl);
-
-	curl_slist_free_all(slist);
-	curl_easy_cleanup(curl);
 	if (f_data) free(f_data);
 	if (f_encode_data) free(f_encode_data);
-	
-	return string(chunk.data);
-}
 
-string Twitpic::upload_status(char *comment) {
-	char *req_uri;
-	char *postarg;
-
-	req_uri = oauth_sign_url2(API_STATUS_TWITTER, &postarg, OA_HMAC, NULL, customerkey, customersecretkey,
-		accesstoken, accesstokensecret);
-	
-	for (int i=0; i<strlen(postarg); i++) {
-		if (postarg[i] == '&') postarg[i] = ',';
-	}
-
-	CURL *curl;
-	CURLcode res;
-	struct curl_slist *slist=NULL;
-
-	struct MemoryStruct chunk;
-	chunk.data=NULL;
-	chunk.size = 0;
-
-	curl = curl_easy_init();
-	curl_easy_setopt(curl, CURLOPT_URL, req_uri);
-	curl_easy_setopt(curl, CURLOPT_POST, 1);
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
-	
-	/* header set */
-	char customh[1024];
-	//slist = curl_slist_append(slist, "Expect:");	// for big data transmission
-	slist = curl_slist_append(slist, "Content-Type: application/x-www-form-urlencoded");
-	strcpy(customh, "Authorization: OAuth ");
-	strcat(customh, postarg);
-	slist = curl_slist_append(slist, customh);
-	curl_easy_setopt(curl, CURLOPT_HTTPHEADER, slist); 
-
-	char statusMsg[256];
-	strcpy(statusMsg, "status=");
-	strcat(statusMsg, urlencode(comment).c_str());
-	curl_easy_setopt(curl, CURLOPT_COPYPOSTFIELDS, statusMsg);
-	
-	/* data set 
-	curl_httppost *formpost=NULL;
-	curl_httppost *lastptr=NULL;
-	curl_slist *headerlist=NULL;
-
-	curl_formadd( &formpost, &lastptr, CURLFORM_COPYNAME, "status", CURLFORM_COPYCONTENTS, comment, CURLFORM_END );
-	curl_easy_setopt( curl, CURLOPT_HTTPPOST, formpost );*/
-
-	// server result in chunk.data
-	res = curl_easy_perform(curl);
-
-	curl_slist_free_all(slist);
-	curl_easy_cleanup(curl);
-	
-	return string(chunk.data);
-}
-
-string Twitpic::upload_pic(char *filepath) {
-	return upload_pic(filepath, "");
+	return _ret;
 }
 
 // shared memory

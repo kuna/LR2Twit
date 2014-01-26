@@ -33,9 +33,6 @@
     <ClCompile Include="DLLInjector.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Twitpic.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="lang.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -43,6 +40,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Tool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Twitpic.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Markup.cpp">
@@ -65,16 +65,13 @@
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="twitcurl.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="TwitProc.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="DLLInjector.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Twitpic.h">
+    <ClInclude Include="iconv.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="lang.h">
@@ -86,19 +83,34 @@
     <ClInclude Include="Tool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Twitpic.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="Markup.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="ReadMe.txt" />
-    <None Include="lr2ico_disabled.ico">
+    <None Include="ico128.ico">
       <Filter>Resource Files</Filter>
     </None>
-    <None Include="lr2ico_normal.ico">
+    <None Include="lr2_e1.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="LR2Twit.ico">
       <Filter>Resource Files</Filter>
     </None>
     <None Include="small.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="ReadMe.txt" />
+    <None Include="lr2ico_normal.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="lr2ico_disabled.ico">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="LR2TwitLogo_res.bmp">
       <Filter>Resource Files</Filter>
     </None>
   </ItemGroup>

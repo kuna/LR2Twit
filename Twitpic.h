@@ -18,11 +18,7 @@ public:
 	Twitpic();
 	~Twitpic();
 	char LR2PicPath[256];
-	void set_account(char *ckey, char *cskey, char *atoken, char *astoken);
-	std::string upload_pic(char *filepath, char *comment);
-	std::string upload_pic(char *filepath);
-	std::string upload_status(char *comment);
-	std::string getBearerToken();
+	std::string getHashData(char *filepath);
 	BOOL CaptureScreen();
 };
 

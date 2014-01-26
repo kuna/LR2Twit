@@ -6,8 +6,7 @@
 // Use in commercial applications requires written permission
 // This software is provided "as is", with no warranty.
 //
-
-#include "stdafx.h"
+#include "stdafx.h"	// project
 #include <stdio.h>
 #include "Markup.h"
 
@@ -21,7 +20,7 @@
 
 #define x_ATTRIBQUOTE '\"' // can be double or single quote
 
-#if defined(MARKUP_STL) && ( defined(MARKUP_WINCONV) || (! defined(MCD_STRERROR)))
+#if (! defined(MARKUP_STL)) && ( defined(MARKUP_WINCONV) || (! defined(MCD_STRERROR)))
 #include <windows.h> // for MultiByteToWideChar, WideCharToMultiByte, FormatMessage
 #endif // need windows.h when STL and (not setlocale or not strerror), MFC afx.h includes it already 
 
@@ -37,7 +36,7 @@
 #undef THIS_FILE
 static char THIS_FILE[]=__FILE__;
 #if defined(DEBUG_NEW)
-#define new DEBUG_NEW
+//#define new DEBUG_NEW
 #endif // DEBUG_NEW
 #endif // VC++ DEBUG
 
