@@ -10,7 +10,7 @@ Twitter - @kuna_KR
 Released - 10.05.20
 
 
-* 가장 근래의 최신 버전은 https://github.com/kuna/LR2Twit/blob/master/redistribute/redistribute.zip 을 다운받으시면 됩니다.
+* 가장 근래의 최신 버전은 https://github.com/kuna/LR2Twit/blob/master/redistribute/Redistribute.zip 을 다운받으시면 됩니다.
 
 
 Release note
