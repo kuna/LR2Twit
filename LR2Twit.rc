@@ -88,6 +88,18 @@ BEGIN
     DEFPUSHBUTTON   "OK",IDOK,195,6,30,11,WS_GROUP
 END
 
+IDD_MESSAGE DIALOGEX 0, 0, 316, 83
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
+CAPTION "Dialog"
+FONT 8, "MS Shell Dlg", 400, 0, 0x1
+BEGIN
+    DEFPUSHBUTTON   "확인",IDOK,205,62,50,14
+    PUSHBUTTON      "취소",IDCANCEL,259,62,50,14
+    EDITTEXT        IDC_MSG,7,25,302,13,ES_AUTOHSCROLL
+    LTEXT           "사용 가능한 치환자는 Readme를 참조해 주세요.",IDC_STATIC,7,7,302,18
+    LTEXT           "",IDC_PREVIEW,7,39,302,23
+END
+
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -123,6 +135,29 @@ END
 //
 
 IDB_LOGO                BITMAP                  "LR2TwitLogo_res.bmp"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+    END
+
+    IDD_MESSAGE, DIALOG
+    BEGIN
+        LEFTMARGIN, 7
+        RIGHTMARGIN, 309
+        TOPMARGIN, 7
+        BOTTOMMARGIN, 76
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
 
 /////////////////////////////////////////////////////////////////////////////
 //

@@ -55,6 +55,7 @@ public:
     bool retweetById( std::string& statusId /* in */ );
 	/* added by kuna */
     bool uploadPicture( std::string& picturedata /* BASE64 Encoded! */ ,std::string& newStatus /* in */ );
+    bool uploadPictureRaw( char *data, int size, std::string& newStatus /* in */ );
 
     /* Twitter timeline APIs */
     bool timelineHomeGet( std::string sinceId = ""  /* in */ );

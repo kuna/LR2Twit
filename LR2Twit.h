@@ -6,19 +6,20 @@
 #include "Twitpic.h"
 #include "Log.h"
 
-#define ID_NOTIFY 1000
+#define ID_NOTIFY 10000
 #define ID_NOTIFY_CLICK WM_USER+1
 
-#define ID_OK 1001
-#define ID_CANCEL 1002
-#define ID_TWEETAUTH 1003
-#define ID_TWIT 1004
-#define ID_CHK1	1005
-#define ID_CHK2	1006
-#define ID_CHK3	1007
-#define ID_CHK4	1008
-#define ID_CHK5	1009
-#define ID_CHK6 1010
+#define ID_OK 10001
+#define ID_CANCEL 10002
+#define ID_TWEETAUTH 10003
+#define ID_TWIT 10004
+#define ID_EDITWND 10011
+#define ID_CHK1	10005
+#define ID_CHK2	10006
+#define ID_CHK3	10007
+#define ID_CHK4	10008
+#define ID_CHK5	10009
+#define ID_CHK6 10010
 
 
 Detector *c_dect;
@@ -76,6 +77,7 @@ HWND b1_hWnd;	// ok
 HWND b2_hWnd;	// cancel
 HWND b3_hWnd;	// get new twitter auth
 HWND b4_hWnd;	// write
+HWND b5_hWnd;	// editwnd
 
 // 수동수정은 ini 파일로!
 

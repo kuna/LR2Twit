@@ -16,6 +16,9 @@
 #define IDI_LR2_D                       130
 #define IDR_NOTIFY                      132
 #define IDB_LOGO                        134
+#define IDD_MESSAGE                     135
+#define IDC_MSG                         1000
+#define IDC_PREVIEW                     1001
 #define ID_MENU_SETTINGS                32771
 #define ID_MENU_EXIT                    32772
 #define ID_FILE_TEST                    32773
@@ -27,9 +30,9 @@
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
-#define _APS_NEXT_RESOURCE_VALUE        135
+#define _APS_NEXT_RESOURCE_VALUE        136
 #define _APS_NEXT_COMMAND_VALUE         32775
-#define _APS_NEXT_CONTROL_VALUE         1000
+#define _APS_NEXT_CONTROL_VALUE         1002
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
 #endif

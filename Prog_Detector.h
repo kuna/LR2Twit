@@ -53,9 +53,6 @@ private:
 	size_t baseAddr;
 	int baseOffset;
 
-	void replace_str(TCHAR *org, TCHAR *find, int n);
-	void replace_str(TCHAR *org, TCHAR *find, TCHAR *n);
-
 	int _OFFSET;
 	void OSDetect();
 	Log *l;
@@ -78,6 +75,11 @@ public:
 	bool detectLR2();
 	bool getLR2Status();
 	void getLR2StatusString(TCHAR *str);
+
+	void replace_str(TCHAR *org, TCHAR *find, int n);
+	void replace_str(TCHAR *org, TCHAR *find, TCHAR *n);
+	TCHAR *getLR2FormatStr();
+	void setLR2FormatStr(TCHAR *str);
 
 	bool isHighScore();
 	bool isCleared();

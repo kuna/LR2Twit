@@ -27,6 +27,7 @@ ATOM				MyRegisterClass(HINSTANCE hInstance);
 BOOL				InitInstance(HINSTANCE, int);
 LRESULT CALLBACK	WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK	About(HWND, UINT, WPARAM, LPARAM);
+BOOL CALLBACK msgDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam);
 
 // language
 LanguageSetting m_Lang;
@@ -216,7 +217,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
    HWND hWnd;
 
    hWnd = CreateWindow(szWindowClass, szTitle, WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME ^ WS_MAXIMIZEBOX ^ WS_MINIMIZEBOX,
-      CW_USEDEFAULT, CW_USEDEFAULT, 240, 350, NULL, NULL, hInstance, NULL);
+      CW_USEDEFAULT, CW_USEDEFAULT, 240, 370, NULL, NULL, hInstance, NULL);
 	m_hWnd = hWnd;
 
    if (!hWnd)
@@ -269,6 +270,7 @@ BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 
 bool b_detected = false;
 HBITMAP hBitmap;	// logo bitmap
+HWND msgDlghWnd;
 LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	int wmId, wmEvent;
@@ -316,13 +318,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				70, 240, COMMON_WIDTH-60, 18, hWnd, (HMENU)0, hInst, NULL);
 			b3_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg6").c_str(), COMMON_BUTTON,
 				10, 260, COMMON_WIDTH, 20, hWnd, (HMENU)ID_TWEETAUTH, hInst, NULL);
-
+			
+			b5_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg10").c_str(), COMMON_BUTTON,
+				10, 285, COMMON_WIDTH, 20, hWnd, (HMENU)ID_EDITWND, hInst, NULL);
 			b1_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg7").c_str(), COMMON_BUTTON,
-				10, 290, 60, 20, hWnd, (HMENU)ID_OK, hInst, NULL);
+				10, 310, 60, 20, hWnd, (HMENU)ID_OK, hInst, NULL);
 			b2_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg8").c_str(), COMMON_BUTTON,
-				80, 290, 60, 20, hWnd, (HMENU)ID_CANCEL, hInst, NULL);
+				80, 310, 60, 20, hWnd, (HMENU)ID_CANCEL, hInst, NULL);
 			b4_hWnd = CreateWindow(L"button", m_Lang.GetLanguageW(L"DIALOG", L"Dlg9").c_str(), COMMON_BUTTON,
-				160, 290, 60, 20, hWnd, (HMENU)ID_TWIT, hInst, NULL);
+				160, 310, 60, 20, hWnd, (HMENU)ID_TWIT, hInst, NULL);
 
 			// labels
 #define COMMON_LABEL (WS_CHILD | WS_VISIBLE)
@@ -347,12 +351,17 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			SendMessage (b2_hWnd, WM_SETFONT, (WPARAM)hFont, TRUE);
 			SendMessage (b3_hWnd, WM_SETFONT, (WPARAM)hFont, TRUE);
 			SendMessage (b4_hWnd, WM_SETFONT, (WPARAM)hFont, TRUE);
+			SendMessage (b5_hWnd, WM_SETFONT, (WPARAM)hFont, TRUE);
 			SendMessage (lbl1, WM_SETFONT, (WPARAM)hFont, TRUE);
 			SendMessage (lbl2, WM_SETFONT, (WPARAM)hFont, TRUE);
 			SendMessage (lbl3, WM_SETFONT, (WPARAM)hFont, TRUE);
 						
 			// load logo from res
 			hBitmap = LoadBitmap(hInst, MAKEINTRESOURCE(IDB_LOGO));
+			
+			// make message edit window
+			msgDlghWnd = CreateDialog(GetModuleHandle(NULL), MAKEINTRESOURCE(IDD_MESSAGE),
+				hWnd, msgDlgProc);
 
 			break;
 		}
@@ -412,22 +421,32 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 				int r = MessageBox(m_hWnd, wstring(str).append(  m_Lang.GetLanguageW(L"DIALOG", L"TwitConfirm") ).c_str(), L"", MB_YESNO);
 				if (r == IDYES) {
 					if (twit_pic)
-						//_beginthread(doTwitwithPic, 0, 0);
 						doTwitwithPic(0);
 					else
 						doTwit(0);
 				}
 			}
 			break;
+		case ID_EDITWND:
+			SetWindowText(msgDlghWnd, m_Lang.GetLanguageW(L"DIALOG", L"Dlg10").c_str());
+			SetWindowText(GetDlgItem(msgDlghWnd, IDC_PREVIEW), L"");
+			SetWindowText(GetDlgItem(msgDlghWnd, IDC_MSG), c_dect->getLR2FormatStr());
+
+			ShowWindow(msgDlghWnd, SW_SHOW);
+			break;
 		case ID_TWEETAUTH:
 			{
 				char _id[255], _pass[255];
 				GetWindowTextA(e1_hWnd, _id, 255);
 				GetWindowTextA(e2_hWnd, _pass, 255);
-				if (c_twit->getToken(_id, _pass)) {
-					MessageBox(m_hWnd, m_Lang.GetLanguageW(L"DIALOG", L"AuthSucceed").c_str(), L"", NULL);
+				if (strlen(_id) == 0 || strlen(_pass) == 0) {
+					MessageBox(m_hWnd, L"ID와 패스워드를 입력해 주셔야 합니다", L"LR2Twit", MB_ICONEXCLAMATION);
 				} else {
-					MessageBox(m_hWnd, m_Lang.GetLanguageW(L"DIALOG", L"AuthFailed").c_str(), L"", NULL);
+					if (c_twit->getToken(_id, _pass)) {
+						MessageBox(m_hWnd, m_Lang.GetLanguageW(L"DIALOG", L"AuthSucceed").c_str(), L"LR2Twit", MB_ICONINFORMATION);
+					} else {
+						MessageBox(m_hWnd, m_Lang.GetLanguageW(L"DIALOG", L"AuthFailed").c_str(), L"LR2Twit", MB_ICONEXCLAMATION);
+					}
 				}
 				break;
 			}
@@ -610,6 +629,71 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+BOOL CALLBACK msgDlgProc(HWND hwnd, UINT Message, WPARAM wParam, LPARAM lParam)
+{
+    switch(Message)
+    {
+        case WM_COMMAND:
+            switch(LOWORD(wParam))
+            {
+                case IDOK:
+					{
+						TCHAR msg[256];
+						GetWindowText(GetDlgItem(hwnd, IDC_MSG), msg, 256);
+						c_dect->setLR2FormatStr(msg);
+						saveSettings();
+						ShowWindow(hwnd, SW_HIDE);
+						break;
+					}
+				case IDCANCEL:
+					ShowWindow(hwnd, SW_HIDE);
+					break;
+				case IDC_MSG:
+					if (HIWORD(wParam) == EN_CHANGE) {
+						TCHAR msg[256];
+						GetWindowText(GetDlgItem(hwnd, IDC_MSG), msg, 256);
+						
+						// replace example
+						c_dect->replace_str(msg, L"[RANK]", L"AAA");
+						c_dect->replace_str(msg, L"[GUAGE]", L"HARD");
+						c_dect->replace_str(msg, L"[RESULT]", L"CLEAR");
+						c_dect->replace_str(msg, L"[MAINTITLE]", L"Angelic Layer");
+						c_dect->replace_str(msg, L"[SUBTITLE]", L"-ANOTHER-");
+						c_dect->replace_str(msg, L"[TITLE]", L"Angelic Layer -ANOTHER-");
+						c_dect->replace_str(msg, L"[ARTIST]", L"Shiki");
+						c_dect->replace_str(msg, L"[GENRE]", L"Trance");
+						c_dect->replace_str(msg, L"[EXS]", L"678");
+						c_dect->replace_str(msg, L"[EXHS]", L"3146");
+						c_dect->replace_str(msg, L"[EXMS]", L"4176");
+						c_dect->replace_str(msg, L"[PG]", L"900");
+						c_dect->replace_str(msg, L"[GR]", L"800");
+						c_dect->replace_str(msg, L"[GD]", L"700");
+						c_dect->replace_str(msg, L"[BD]", L"600");
+						c_dect->replace_str(msg, L"[PR]", L"500");
+						c_dect->replace_str(msg, L"[NC]", L"400");
+						c_dect->replace_str(msg, L"[MC]", L"300");
+						c_dect->replace_str(msg, L"[DIFF]", L"★4");
+						c_dect->replace_str(msg, L"[SCORE]", L"171819");
+						c_dect->replace_str(msg, L"[IRTOT]", L"4000");
+						c_dect->replace_str(msg, L"[IRNOW]", L"1300");
+						c_dect->replace_str(msg, L"[KEY]", L"7");
+						c_dect->replace_str(msg, L"[AUTO]", L"(AUTO-SCR)");
+						c_dect->replace_str(msg, L"[RATE]", L"88.99");
+
+						SetWindowText(GetDlgItem(hwnd, IDC_PREVIEW), msg);
+					}
+					break;
+            }
+			break;
+		case WM_CLOSE:
+			ShowWindow(hwnd, SW_HIDE);
+			break;
+        default:
+            return FALSE;
+    }
+    return TRUE;
+}
+
 // Message handler for about box.
 INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -788,6 +872,7 @@ void saveSettings() {
 	WritePrivateProfileStringW(L"LR2TWIT", L"TWIT_WITHPIC", _s, L".\\settings.ini" );
 	_itow(opt6, _s, 10);
 	WritePrivateProfileStringW(L"LR2TWIT", L"TWIT_LR2TAG", _s, L".\\settings.ini" );
+	WritePrivateProfileStringW(L"LR2TWIT", L"TWIT_MESSAGE", c_dect->getLR2FormatStr(), L".\\settings.ini");
 }
 
 void loadSettings() {
@@ -799,7 +884,7 @@ void loadSettings() {
 	opt1 = _wtoi(_s);
 	GetPrivateProfileStringW(L"LR2TWIT", L"LR2_REMOVEAUTOLIMIT", L"0", _s, 255, L".\\settings.ini");
 	opt7 = _wtoi(_s);
-	GetPrivateProfileStringW(L"LR2TWIT", L"TWIT_MESSAGE", L"《[TITLE] ([DIFF])》 [GUAGE] [RESULT]♬ - [RATE]%([RANK]), [MC]/[NC] Combo, [PR]+[BD] BP♬", _s, 255, L".\\settings.ini");
+	GetPrivateProfileStringW(L"LR2TWIT", L"TWIT_MESSAGE", L"《[TITLE] ([DIFF])》 [GUAGE] [RESULT] - [RATE]%([RANK]), [MC]/[NC] Combo, [PR]+[BD] BP", _s, 255, L".\\settings.ini");
 	lstrcpy(opt_message, _s);
 	GetPrivateProfileStringW(L"LR2TWIT", L"TWIT_ENCODING", L"SHIFT_JIS", _s, 255, L".\\settings.ini");
 	wcstombs(opt_encode, _s, 255);

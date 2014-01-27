@@ -427,7 +427,6 @@ void Detector::getLR2StatusString(TCHAR *str)
 	replace_str(str, L"[PR]", LR2stat[LR_PR]);
 	replace_str(str, L"[NC]", LR2stat[LR_NC]);
 	replace_str(str, L"[MC]", LR2stat[LR_MC]);
-	//replace_str(str, L"[DIFF]", LR2stat[LR_DIFF]);
 	replace_str(str, L"[DIFF]", s7);
 	replace_str(str, L"[SCORE]", LR2stat[LR_SCORE]);
 	replace_str(str, L"[IRTOT]", LR2stat[LR_IRTOT]);
@@ -447,8 +446,6 @@ void Detector::getLR2StatusString(TCHAR *str)
 	} else {
 		l->writeLogLine(L"IIDXBMS", L"복돌(?) BMS 입니다");
 	}
-
-	return;
 }
 
 /**depreciated*/
@@ -485,6 +482,14 @@ void Detector::replace_str(TCHAR *org, TCHAR *find, TCHAR *n) {
 	*sr = L'\0';
 
 	lstrcpy(org_pt, result);
+}
+
+TCHAR *Detector::getLR2FormatStr() {
+	return LR2FormatStr;
+}
+
+void Detector::setLR2FormatStr(TCHAR *str) {
+	lstrcpy(LR2FormatStr, str);
 }
 
 bool Detector::checkInsaneLevel(TCHAR *diff) {
