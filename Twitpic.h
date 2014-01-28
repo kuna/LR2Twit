@@ -18,7 +18,7 @@ public:
 	Twitpic();
 	~Twitpic();
 	char LR2PicPath[256];
-	std::string getHashData(char *filepath);
+	void getRawData(char *filepath, char **data, int *size);
 	BOOL CaptureScreen();
 };
 

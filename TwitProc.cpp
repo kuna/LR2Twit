@@ -154,13 +154,13 @@ bool TwitProc::sendTwit(string msg)
 	}
 }
 
-bool TwitProc::sendMediaTwit(string msg, string data)
+bool TwitProc::sendMediaTwit(string msg, char *data, int size)
 {
-	if (msg.length() > 140) {
-		msg = msg.substr(0, 140);
+	if (msg.length() > 117) { // include image url
+		msg = msg.substr(0, 117);
 	}
 
-	if (twitterObj.uploadPicture( data, msg )) {
+	if (twitterObj.uploadPictureRaw( data, size, msg )) {
 		string replyMsg;
 		twitterObj.getLastWebResponse( replyMsg );
 		l->writeLogLine( L"MediaTwit", replyMsg.c_str() );

@@ -759,34 +759,44 @@ void __cdecl doTwitwithPic(PVOID delaymilltime) {
 
 	TCHAR str[255];
 	c_dect->getLR2StatusString(str);
-	str[119] = L'\0';	// max 140-21 = 119 char
+	str[117] = L'\0';	// max 140-21 = 119 char
 	m_log.writeLogLine(L"TwitPic", str);
 
-	char* pTemp = NULL;
-	int iLen = ::WideCharToMultiByte(CP_UTF8, 0, str, -1, pTemp, 0, NULL, NULL);
-	pTemp = new char[iLen+1];
-	::WideCharToMultiByte(CP_UTF8, 0, str, -1, pTemp, iLen, NULL, NULL);
+	std::string ret;
+    int len = WideCharToMultiByte(CP_UTF8, 0, str, wcslen(str), NULL, 0, NULL, NULL);
+    if (len > 0)
+    {
+		char *t = new char[len+2];
+		WideCharToMultiByte(CP_UTF8, 0, str, wcslen(str), t, len, NULL, NULL);
+		t[len] = 0;
+		ret = string(t);
+		delete [] t;
+    }
 	
-	string astr = string(pTemp);
-	delete [] pTemp;
-	
-	/*m_tpic.set_account(c_twit->customerKey, c_twit->customerSecret,
-		c_twit->accessToken, c_twit->accessTokenSecret);*/
 	if (m_tpic.CaptureScreen())	// wait till finish
 	{		
 		// remove after update
 		setMessage( m_Lang.GetLanguageA("HOOK", "PicTwitWait").c_str() );
-		string hashdata = m_tpic.getHashData( m_tpic.LR2PicPath );
-		if (c_twit->sendMediaTwit( astr, hashdata )) {
-			setMessage( m_Lang.GetLanguageA("HOOK", "PicTwit").c_str() );
-			playAlarm();
-			//remove(m_tpic.LR2PicPath);
+		char *data;
+		int len;
+		//m_tpic.getRawData( m_tpic.LR2PicPath, data, &len );
+		m_tpic.getRawData( m_tpic.LR2PicPath, &data, &len );
+		if (len <= 0) {
+			m_log.writeLogLine( "Screen tweet failed. (no Captured file)" );
 		} else {
-			m_log.writeLogLine( "Screen tweet failed." );
+			if (c_twit->sendMediaTwit( ret, data, len )) {
+				setMessage( m_Lang.GetLanguageA("HOOK", "PicTwit").c_str() );
+				playAlarm();
+			} else {
+				m_log.writeLogLine( "Screen tweet failed." );
+			}
 		}
+		free(data);
 	} else {
 		m_log.writeLogLine( "Failed to capture screen." );
 	}
+
+	remove(m_tpic.LR2PicPath);
 }
 
 void doTray() {
